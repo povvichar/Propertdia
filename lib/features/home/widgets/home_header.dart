@@ -28,7 +28,7 @@ class HomeHeader extends StatelessWidget {
                             'Current Location',
                             style: TextStyle(
                               color: AppColors.textSecondary,
-                              fontSize: 14,
+                              fontSize: 11,
                             ),
                           ),
                           const SizedBox(width: 4),
@@ -48,25 +48,23 @@ class HomeHeader extends StatelessWidget {
                         'Phnom Penh',
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 21,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
                 ),
-                _HeaderAction(
-                  child: SvgPicture.asset(
-                    'assets/icons/base/plus.svg',
-                    width: 22,
-                    height: 22,
-                  ),
+                SvgPicture.asset(
+                  'assets/icons/base/add_circle.svg',
+                  width: 24,
+                  height: 24,
                 ),
                 const SizedBox(width: 14),
                 const Image(
                   image: AssetImage('assets/images/logo_mark.png'),
-                  width: 30,
-                  height: 30,
+                  width: 24,
+                  height: 24,
                   color: AppColors.gold,
                 ),
                 const SizedBox(width: 14),
@@ -82,29 +80,6 @@ class HomeHeader extends StatelessWidget {
   }
 }
 
-class _HeaderAction extends StatelessWidget {
-  const _HeaderAction({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: const BoxDecoration(
-          color: AppColors.iconTile,
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: child,
-      ),
-    );
-  }
-}
 
 class _NotificationBell extends StatelessWidget {
   const _NotificationBell();
@@ -114,7 +89,7 @@ class _NotificationBell extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        SvgPicture.asset('assets/icons/base/bell.svg', width: 26, height: 26),
+        SvgPicture.asset('assets/icons/base/bell.svg', width: 24, height: 24),
         Positioned(
           right: 0,
           top: 0,
@@ -122,7 +97,7 @@ class _NotificationBell extends StatelessWidget {
             width: 9,
             height: 9,
             decoration: BoxDecoration(
-              color: AppColors.gold,
+              color: AppColors.navy,
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.background, width: 1.5),
             ),
@@ -138,32 +113,43 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: 'Search condo, borey, land...',
-        hintStyle: const TextStyle(
-          color: AppColors.textSecondary,
-          fontSize: 15,
-        ),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: SvgPicture.asset(
-            'assets/icons/base/search.svg',
-            width: 22,
-            height: 22,
-            colorFilter: const ColorFilter.mode(
-              AppColors.textSecondary,
-              BlendMode.srcIn,
+    return SizedBox(
+      height: 46,
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Search condo, borey, land...',
+          hintStyle: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 14,
+          ),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 14, right: 10),
+            child: SvgPicture.asset(
+              'assets/icons/base/search.svg',
+              width: 18,
+              height: 18,
+              colorFilter: const ColorFilter.mode(
+                AppColors.textSecondary,
+                BlendMode.srcIn,
+              ),
             ),
           ),
-        ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 50),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
+          prefixIconConstraints: const BoxConstraints(minWidth: 46),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(26),
+            borderSide: const BorderSide(color: Color(0xFFE7E7EC), width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(26),
+            borderSide: const BorderSide(color: Color(0xFFE7E7EC), width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(26),
+            borderSide: const BorderSide(color: Color(0xFFE7E7EC), width: 1),
+          ),
         ),
       ),
     );

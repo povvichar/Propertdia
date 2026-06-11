@@ -14,23 +14,28 @@ const _services = [
   _Service('assets/icons/home/map_price.svg', 'Map Price'),
   _Service('assets/icons/home/property_estimate.svg', 'Estimate'),
   _Service('assets/icons/home/title_services.svg', 'Title Services'),
+  _Service('assets/icons/home/force_sale.svg', 'Force Sale'),
   _Service('assets/icons/home/invest_loan.svg', 'Invest & Loan'),
+  _Service('assets/icons/home/partnership.svg', 'Partnership'),
 ];
 
-/// Single row of four service shortcuts: white card with the icon,
-/// label below the card.
 class ServiceGrid extends StatelessWidget {
   const ServiceGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < _services.length; i++) ...[
-          if (i > 0) const SizedBox(width: 12),
-          Expanded(child: _ServiceTile(service: _services[i])),
-        ],
-      ],
+    return GridView.builder(
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        mainAxisExtent: 90,
+      ),
+      itemCount: _services.length,
+      itemBuilder: (context, i) => _ServiceTile(service: _services[i]),
     );
   }
 }
@@ -42,26 +47,39 @@ class _ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: () {},
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
-        children: [
-          SvgPicture.asset(service.asset, width: 40, height: 40),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE7E7EC), width: 1),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              service.asset,
+              width: 28,
+              height: 28,
+              colorFilter: const ColorFilter.mode(
+                AppColors.navyIcon,
+                BlendMode.srcIn,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
               service.label,
               maxLines: 1,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

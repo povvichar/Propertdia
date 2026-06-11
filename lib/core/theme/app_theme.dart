@@ -16,7 +16,7 @@ abstract class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
     );
 
-    final textTheme = GoogleFonts.interTextTheme(base.textTheme).apply(
+    final textTheme = GoogleFonts.robotoTextTheme(base.textTheme).apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
     );
@@ -32,6 +32,8 @@ abstract class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.gold,
           foregroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

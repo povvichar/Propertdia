@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/models/property.dart';
@@ -20,12 +21,17 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Content scrolls underneath the floating glass nav.
       extendBody: true,
       body: const _HomeBody(),
       bottomNavigationBar: _GlassNav(
         current: tab,
-        onChanged: (i) => ref.read(homeTabProvider.notifier).state = i,
+        onChanged: (i) {
+          if (i == 3) {
+            context.push('/register');
+          } else {
+            ref.read(homeTabProvider.notifier).state = i;
+          }
+        },
       ),
     );
   }
@@ -52,23 +58,15 @@ class _HomeBody extends StatelessWidget {
                 const _SectionTitle(title: 'Best Price'),
                 const SizedBox(height: 12),
                 SizedBox(
-                  height: 318,
+                  height: 215,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: mockBestPrice.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, i) =>
-                        PropertyCard(property: mockBestPrice[i], width: 264),
+                        PropertyCard(property: mockBestPrice[i], width: 168),
                   ),
                 ),
-                const SizedBox(height: 24),
-                const _SectionTitle(title: 'Recommended for You'),
-                const SizedBox(height: 12),
-                for (final p in mockRecommended) ...[
-                  PropertyCard(property: p),
-                  const SizedBox(height: 14),
-                ],
-                // Clearance so the last card scrolls above the glass nav.
                 const SizedBox(height: 110),
               ],
             ),
@@ -121,7 +119,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 196,
+      height: 182,
       child: Stack(
         children: [
           PageView.builder(
@@ -195,7 +193,7 @@ class _HeroBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 210),
+                  constraints: const BoxConstraints(maxWidth: 195),
                   child: Text(
                     slide.subtitle,
                     style: const TextStyle(
@@ -227,7 +225,7 @@ class _SectionTitle extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -257,13 +255,11 @@ class _NavItem {
 
 const _navItems = [
   _NavItem('assets/icons/base/home.svg', 'Home'),
-  _NavItem('assets/icons/home/force_sale.svg', 'Force Sale'),
+  _NavItem('assets/icons/base/bookmark.svg', 'Favorite'),
   _NavItem('assets/icons/base/clapperboard.svg', 'Media'),
   _NavItem('assets/icons/base/profile.svg', 'Profile'),
 ];
 
-/// Floating iOS-style liquid-glass tab bar: blurred translucent pill
-/// hovering above the content.
 class _GlassNav extends StatelessWidget {
   const _GlassNav({required this.current, required this.onChanged});
 
@@ -328,17 +324,18 @@ class _GlassNavItem extends StatelessWidget {
           width: 44,
           height: 30,
           decoration: BoxDecoration(
-            color: active ? AppColors.goldSoft : Colors.transparent,
+            color: active ? AppColors.navy.withValues(alpha: 0.12) : Colors.transparent,
             borderRadius: BorderRadius.circular(15),
           ),
           alignment: Alignment.center,
           child: SvgPicture.asset(
             item.asset,
-            width: 24,
-            height: 24,
-            colorFilter: active
-                ? const ColorFilter.mode(AppColors.goldDark, BlendMode.srcIn)
-                : null,
+            width: 22,
+            height: 22,
+            colorFilter: ColorFilter.mode(
+              active ? AppColors.navy : AppColors.textSecondary,
+              BlendMode.srcIn,
+            ),
           ),
         ),
         const SizedBox(height: 4),
@@ -347,7 +344,7 @@ class _GlassNavItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: active ? AppColors.goldDark : AppColors.textSecondary,
+            color: active ? AppColors.navy : AppColors.textSecondary,
           ),
         ),
       ],

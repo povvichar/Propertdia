@@ -11,7 +11,7 @@ abstract class AppColors {
   static const Color navyIcon = Color(0xFF233560);
 
   // Surfaces
-  static const Color background = Color(0xFFF1F3F8);
+  static const Color background = Color(0xFFF9FAFF);
   static const Color surface = Colors.white;
   static const Color surfaceMuted = Color(0xFFF5F6FA);
   static const Color iconTile = Color(0xFFE9ECF4);
