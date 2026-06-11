@@ -1,0 +1,27 @@
+name: propertdia
+description: "PROPERTDIA — Grow your investment. Real estate platform for Cambodia."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  flutter_svg: ^2.0.10
+  go_router: ^14.2.0
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/home/
+    - assets/icons/base/
