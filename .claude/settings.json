@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(xcrun simctl *)",
+      "Bash(flutter run *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(wait 20699)",
+      "Bash(jobs -l)",
+      "Bash(grep \"\\\\.dart$\")",
+      "Bash(pkill -f \"flutter run\")",
+      "Bash(open -a Simulator)",
+      "Bash(python3 -)",
+      "Bash(pip3 install *)",
+      "Bash(tmux -V)",
+      "Bash(sleep 15 && cat /tmp/flutter_pty.log 2>/dev/null | tail -5)",
+      "Read(//private/tmp/**)",
+      "Bash(pkill -f \"flutter_tools\\\\|flutter run\")",
+      "Bash(osascript -e 'tell application \"Terminal\" *)",
+      "Bash(expect -c ' *)"
+    ]
+  }
+}

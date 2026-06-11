@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/primary_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -100,7 +101,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 20),
 
                     // Continue
-                    _ContinueButton(enabled: _hasInput, onPressed: () {}),
+                    PrimaryButton(
+                      label: 'Continue',
+                      onPressed: () {},
+                      enabled: _hasInput,
+                    ),
 
                     const SizedBox(height: 32),
 
@@ -291,54 +296,6 @@ class _PhoneField extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Continue button ──────────────────────────────────────────────────────────
-
-class _ContinueButton extends StatelessWidget {
-  const _ContinueButton({required this.enabled, required this.onPressed});
-
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      height: 54,
-      decoration: BoxDecoration(
-        color: enabled ? AppColors.gold : AppColors.gold.withValues(alpha: 0.40),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Continue',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 6),
-              SvgPicture.asset(
-                'assets/icons/base/arrowright.svg',
-                width: 18,
-                height: 18,
-                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
