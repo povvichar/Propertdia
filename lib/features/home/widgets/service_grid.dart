@@ -12,30 +12,25 @@ class _Service {
 
 const _services = [
   _Service('assets/icons/home/map_price.svg', 'Map Price'),
-  _Service('assets/icons/home/property_estimate.svg', 'Property Estimate'),
+  _Service('assets/icons/home/property_estimate.svg', 'Estimate'),
   _Service('assets/icons/home/title_services.svg', 'Title Services'),
-  _Service('assets/icons/home/force_sale.svg', 'Force Sale'),
   _Service('assets/icons/home/invest_loan.svg', 'Invest & Loan'),
-  _Service('assets/icons/home/partnership.svg', 'Partnership'),
 ];
 
-/// 3x2 grid of primary service shortcuts.
+/// Single row of four service shortcuts: white card with the icon,
+/// label below the card.
 class ServiceGrid extends StatelessWidget {
   const ServiceGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _services.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.88,
-      ),
-      itemBuilder: (context, i) => _ServiceTile(service: _services[i]),
+    return Row(
+      children: [
+        for (var i = 0; i < _services.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          Expanded(child: _ServiceTile(service: _services[i])),
+        ],
+      ],
     );
   }
 }
@@ -47,46 +42,46 @@ class _ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
+    return Column(
+      children: [
+        Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            onTap: () {},
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: 86,
+              alignment: Alignment.center,
+              child: Container(
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   color: AppColors.iconTile,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 alignment: Alignment.center,
-                child: SvgPicture.asset(service.asset, width: 28, height: 28),
+                child:
+                    SvgPicture.asset(service.asset, width: 26, height: 26),
               ),
-              const SizedBox(height: 8),
-              Flexible(
-                child: Text(
-                  service.label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                    height: 1.25,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 10),
+        // Scale down slightly on narrow screens so labels never truncate.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            service.label,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

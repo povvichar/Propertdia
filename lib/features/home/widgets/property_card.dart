@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/property.dart';
 
-/// Listing card with photo, sale tag, price, and key specs.
+/// Listing card: rounded photo, sale chip, title, location, price.
 /// Pass [width] to use it in a horizontal carousel; omit for full width.
 class PropertyCard extends StatelessWidget {
   const PropertyCard({super.key, required this.property, this.width});
@@ -17,18 +17,20 @@ class PropertyCard extends StatelessWidget {
       width: width,
       child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: () {},
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 10,
                     child: Image.network(
                       property.imageUrl,
                       fit: BoxFit.cover,
@@ -38,118 +40,59 @@ class PropertyCard extends StatelessWidget {
                               : Container(color: AppColors.iconTile),
                     ),
                   ),
-                  Positioned(
-                    left: 12,
-                    top: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: AppColors.gold,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        property.tag,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.goldSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    property.tag,
+                    style: const TextStyle(
+                      color: AppColors.goldDark,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      property.price,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      property.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on,
-                            size: 14, color: AppColors.textSecondary),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            property.location,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (property.beds > 0) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _Spec(icon: Icons.bed_rounded, value: '${property.beds}'),
-                          const SizedBox(width: 14),
-                          _Spec(
-                              icon: Icons.bathtub_rounded,
-                              value: '${property.baths}'),
-                          const SizedBox(width: 14),
-                          _Spec(
-                              icon: Icons.square_foot_rounded,
-                              value: '${property.areaSqm} m²'),
-                        ],
-                      ),
-                    ],
-                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                Text(
+                  property.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  property.location,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  property.price,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Spec extends StatelessWidget {
-  const _Spec({required this.icon, required this.value});
-
-  final IconData icon;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppColors.navyIcon),
-        const SizedBox(width: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }

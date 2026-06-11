@@ -1,80 +1,81 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Navy header with location selector, quick actions, and the search bar,
-/// rounded at the bottom like the Figma design.
+/// Light header: location selector on the left, quick actions on the right,
+/// white search pill below.
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.navy,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
-      child: const SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 22),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Current Location',
-                          style: TextStyle(
-                            color: AppColors.textOnDarkMuted,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on,
-                                color: AppColors.gold, size: 18),
-                            SizedBox(width: 4),
-                            Text(
-                              'Phnom Penh',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                              ),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Current Location',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
                             ),
-                            SizedBox(width: 4),
-                            Icon(Icons.keyboard_arrow_down,
-                                color: Colors.white, size: 20),
-                          ],
+                          ),
+                          const SizedBox(width: 4),
+                          SvgPicture.asset(
+                            'assets/icons/base/caretdown.svg',
+                            width: 16,
+                            height: 16,
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.textSecondary,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Phnom Penh',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 21,
+                          fontWeight: FontWeight.w700,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  _HeaderAction(child: Icon(Icons.add, color: Colors.white, size: 20)),
-                  SizedBox(width: 10),
-                  _HeaderAction(
-                    child: Image(
-                      image: AssetImage('assets/images/logo_mark.png'),
-                      width: 24,
-                      height: 24,
-                      color: AppColors.gold,
-                    ),
+                ),
+                _HeaderAction(
+                  child: SvgPicture.asset(
+                    'assets/icons/base/plus.svg',
+                    width: 22,
+                    height: 22,
                   ),
-                  SizedBox(width: 10),
-                  _HeaderAction(
-                    child: _NotificationBell(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-              _SearchBar(),
-            ],
-          ),
+                ),
+                const SizedBox(width: 14),
+                const Image(
+                  image: AssetImage('assets/images/logo_mark.png'),
+                  width: 30,
+                  height: 30,
+                  color: AppColors.gold,
+                ),
+                const SizedBox(width: 14),
+                const _NotificationBell(),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const _SearchBar(),
+          ],
         ),
       ),
     );
@@ -94,8 +95,8 @@ class _HeaderAction extends StatelessWidget {
       child: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
+        decoration: const BoxDecoration(
+          color: AppColors.iconTile,
           shape: BoxShape.circle,
         ),
         alignment: Alignment.center,
@@ -113,18 +114,17 @@ class _NotificationBell extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const Icon(Icons.notifications_none_rounded,
-            color: Colors.white, size: 22),
+        SvgPicture.asset('assets/icons/base/bell.svg', width: 26, height: 26),
         Positioned(
-          right: -1,
-          top: -1,
+          right: 0,
+          top: 0,
           child: Container(
             width: 9,
             height: 9,
             decoration: BoxDecoration(
               color: AppColors.gold,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.navy, width: 1.5),
+              border: Border.all(color: AppColors.background, width: 1.5),
             ),
           ),
         ),
@@ -145,13 +145,24 @@ class _SearchBar extends StatelessWidget {
           color: AppColors.textSecondary,
           fontSize: 15,
         ),
-        prefixIcon:
-            const Icon(Icons.search, color: AppColors.textSecondary, size: 22),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: SvgPicture.asset(
+            'assets/icons/base/search.svg',
+            width: 22,
+            height: 22,
+            colorFilter: const ColorFilter.mode(
+              AppColors.textSecondary,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 50),
         filled: true,
-        fillColor: AppColors.surfaceMuted,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
         ),
       ),

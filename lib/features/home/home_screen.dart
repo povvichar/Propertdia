@@ -1,10 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/models/property.dart';
 import '../../shared/providers/app_providers.dart';
-import '../../shared/widgets/brand_logo.dart';
 import 'widgets/home_header.dart';
 import 'widgets/property_card.dart';
 import 'widgets/service_grid.dart';
@@ -18,8 +20,10 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      // Content scrolls underneath the floating glass nav.
+      extendBody: true,
       body: const _HomeBody(),
-      bottomNavigationBar: _BottomNav(
+      bottomNavigationBar: _GlassNav(
         current: tab,
         onChanged: (i) => ref.read(homeTabProvider.notifier).state = i,
       ),
@@ -41,20 +45,20 @@ class _HomeBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _HeroBanner(),
-                const SizedBox(height: 16),
+                const _HeroCarousel(),
+                const SizedBox(height: 22),
                 const ServiceGrid(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 26),
                 const _SectionTitle(title: 'Best Price'),
                 const SizedBox(height: 12),
                 SizedBox(
-                  height: 292,
+                  height: 318,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: mockBestPrice.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 14),
                     itemBuilder: (context, i) =>
-                        PropertyCard(property: mockBestPrice[i], width: 270),
+                        PropertyCard(property: mockBestPrice[i], width: 264),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -64,7 +68,8 @@ class _HomeBody extends StatelessWidget {
                   PropertyCard(property: p),
                   const SizedBox(height: 14),
                 ],
-                const SizedBox(height: 12),
+                // Clearance so the last card scrolls above the glass nav.
+                const SizedBox(height: 110),
               ],
             ),
           ),
@@ -74,56 +79,133 @@ class _HomeBody extends StatelessWidget {
   }
 }
 
+class _HeroSlide {
+  const _HeroSlide(this.title, this.subtitle);
+
+  final String title;
+  final String subtitle;
+}
+
+const _heroSlides = [
+  _HeroSlide(
+    'Discover Your Dream Property',
+    'Browse houses, condos & lands across Cambodia.',
+  ),
+  _HeroSlide(
+    'Real Prices on the Map',
+    'Live market prices and trends by area.',
+  ),
+  _HeroSlide(
+    'Trusted Title Services',
+    'Verify ownership with local experts.',
+  ),
+];
+
+class _HeroCarousel extends StatefulWidget {
+  const _HeroCarousel();
+
+  @override
+  State<_HeroCarousel> createState() => _HeroCarouselState();
+}
+
+class _HeroCarouselState extends State<_HeroCarousel> {
+  final _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 196,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _controller,
+            itemCount: _heroSlides.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (context, i) => _HeroBanner(slide: _heroSlides[i]),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 14,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < _heroSlides.length; i++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == _page ? 26 : 18,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: i == _page ? AppColors.gold : Colors.white38,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HeroBanner extends StatelessWidget {
-  const _HeroBanner();
+  const _HeroBanner({required this.slide});
+
+  final _HeroSlide slide;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 168,
-      decoration: BoxDecoration(
-        color: AppColors.navy,
-        borderRadius: BorderRadius.circular(18),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       clipBehavior: Clip.antiAlias,
-      child: Row(
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          const Expanded(
-            flex: 11,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 8, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Discover Your Dream Property',
-                    style: TextStyle(
+          const Image(
+            image: AssetImage('assets/images/banner.png'),
+            fit: BoxFit.cover,
+            alignment: Alignment.centerRight,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  child: Text(
+                    slide.title,
+                    style: const TextStyle(
                       color: AppColors.gold,
                       fontSize: 21,
                       fontWeight: FontWeight.w700,
-                      height: 1.2,
+                      height: 1.25,
                     ),
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Browse houses, condos & lands across Cambodia.',
-                    style: TextStyle(
-                      color: AppColors.textOnDarkMuted,
+                ),
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 210),
+                  child: Text(
+                    slide.subtitle,
+                    style: const TextStyle(
+                      color: Colors.white,
                       fontSize: 13.5,
                       height: 1.45,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 8,
-            child: Image.network(
-              'https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=700&q=80',
-              fit: BoxFit.cover,
-              height: double.infinity,
+                ),
+              ],
             ),
           ),
         ],
@@ -166,74 +248,63 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _BottomNav extends StatelessWidget {
-  const _BottomNav({required this.current, required this.onChanged});
+class _NavItem {
+  const _NavItem(this.asset, this.label);
+
+  final String asset;
+  final String label;
+}
+
+const _navItems = [
+  _NavItem('assets/icons/base/home.svg', 'Home'),
+  _NavItem('assets/icons/home/force_sale.svg', 'Force Sale'),
+  _NavItem('assets/icons/base/clapperboard.svg', 'Media'),
+  _NavItem('assets/icons/base/profile.svg', 'Profile'),
+];
+
+/// Floating iOS-style liquid-glass tab bar: blurred translucent pill
+/// hovering above the content.
+class _GlassNav extends StatelessWidget {
+  const _GlassNav({required this.current, required this.onChanged});
 
   final int current;
   final ValueChanged<int> onChanged;
 
-  static const _items = [
-    (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.bookmark_rounded, label: 'Favorite'),
-    (icon: Icons.movie_rounded, label: 'Media'),
-    (icon: Icons.person_rounded, label: 'Profile'),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 68,
-          child: Row(
-            children: [
-              for (var i = 0; i < _items.length; i++)
-                Expanded(
-                  child: InkWell(
-                    onTap: () => onChanged(i),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: i == current
-                                ? AppColors.goldSoft
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            _items[i].icon,
-                            size: 24,
-                            color: i == current
-                                ? AppColors.gold
-                                : AppColors.navyIcon.withValues(alpha: 0.55),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          _items[i].label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: i == current
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                            color: i == current
-                                ? AppColors.gold
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 0, 20, bottomInset > 0 ? bottomInset : 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(38),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+          child: Container(
+            height: 76,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.62),
+              borderRadius: BorderRadius.circular(38),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.65),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              children: [
+                for (var i = 0; i < _navItems.length; i++)
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => onChanged(i),
+                      borderRadius: BorderRadius.circular(38),
+                      child: _GlassNavItem(
+                        item: _navItems[i],
+                        active: i == current,
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -241,12 +312,45 @@ class _BottomNav extends StatelessWidget {
   }
 }
 
-/// Small gold brand mark used in the header action row.
-class HeaderBrandMark extends StatelessWidget {
-  const HeaderBrandMark({super.key});
+class _GlassNavItem extends StatelessWidget {
+  const _GlassNavItem({required this.item, required this.active});
+
+  final _NavItem item;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
-    return const BrandLogo(size: 28, color: AppColors.gold);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 44,
+          height: 30,
+          decoration: BoxDecoration(
+            color: active ? AppColors.goldSoft : Colors.transparent,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          alignment: Alignment.center,
+          child: SvgPicture.asset(
+            item.asset,
+            width: 24,
+            height: 24,
+            colorFilter: active
+                ? const ColorFilter.mode(AppColors.goldDark, BlendMode.srcIn)
+                : null,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          item.label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            color: active ? AppColors.goldDark : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
   }
 }
