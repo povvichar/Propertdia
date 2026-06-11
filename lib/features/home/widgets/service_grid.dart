@@ -42,46 +42,27 @@ class _ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              height: 86,
-              alignment: Alignment.center,
-              child: Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: AppColors.iconTile,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                alignment: Alignment.center,
-                child:
-                    SvgPicture.asset(service.asset, width: 26, height: 26),
+    return InkWell(
+      onTap: () {},
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          SvgPicture.asset(service.asset, width: 40, height: 40),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              service.label,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        // Scale down slightly on narrow screens so labels never truncate.
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            service.label,
-            maxLines: 1,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
