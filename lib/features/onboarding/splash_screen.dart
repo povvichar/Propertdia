@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../shared/widgets/brand_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _anim.forward();
     _timer = Timer(const Duration(milliseconds: 2400), () {
-      if (mounted) context.go('/language');
+      if (mounted) context.go('/onboarding');
     });
   }
 
@@ -57,8 +56,9 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const CustomPaint(
-            painter: DiamondPatternPainter(color: Color(0x14FFFFFF)),
+          Image.asset(
+            'assets/images/start_screen_pattern.png',
+            fit: BoxFit.cover,
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -69,8 +69,8 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: _fade,
                   child: Image.asset(
                     'assets/images/logo.png',
-                    width: 210,
-                    height: 210,
+                    width: 120,
+                    height: 120,
                   ),
                 ),
               ),
