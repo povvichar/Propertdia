@@ -2,10 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
 import '../../shared/providers/app_providers.dart';
 import '../../shared/widgets/primary_button.dart';
 
@@ -41,6 +41,22 @@ const _pages = [
   ),
 ];
 
+// ── Language data ─────────────────────────────────────────────────────────────
+
+class _LangOption {
+  const _LangOption(this.lang, this.flag, this.label);
+  final AppLanguage lang;
+  final String flag;
+  final String label;
+}
+
+const _langOptions = [
+  _LangOption(AppLanguage.english, 'assets/icons/base/english.svg', 'English'),
+  _LangOption(AppLanguage.khmer, 'assets/icons/base/khmer.svg', 'Khmer'),
+];
+
+// ── Screen ────────────────────────────────────────────────────────────────────
+
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -51,6 +67,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
+  bool _langOpen = false;
 
   @override
   void dispose() {
@@ -71,6 +88,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selected = ref.watch(languageProvider);
+
     return Scaffold(
       backgroundColor: AppColors.navy,
       body: Stack(
@@ -82,6 +101,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             onPageChanged: (i) => setState(() => _page = i),
             itemBuilder: (context, i) => _OnboardingSlide(page: _pages[i]),
           ),
+
+          // Tap-outside barrier — sits below UI, closes dropdown on background tap
+          if (_langOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _langOpen = false),
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox.expand(),
+              ),
+            ),
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -90,7 +120,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _LangPicker(ref: ref),
+                      _LangPicker(
+                        selected: selected,
+                        isOpen: _langOpen,
+                        onToggle: () =>
+                            setState(() => _langOpen = !_langOpen),
+                        onSelect: (lang) {
+                          ref.read(languageProvider.notifier).state = lang;
+                          setState(() => _langOpen = false);
+                        },
+                      ),
                       TextButton(
                         onPressed: () => context.go('/home'),
                         child: const Text(
@@ -143,23 +182,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-// ── Liquid-glass language picker ─────────────────────────────────────────────
-
-class _LangOption {
-  const _LangOption(this.lang, this.flag, this.label);
-  final AppLanguage lang;
-  final String flag;
-  final String label;
-}
-
-const _langOptions = [
-  _LangOption(AppLanguage.english, 'assets/icons/base/english.svg', 'English'),
-  _LangOption(AppLanguage.khmer, 'assets/icons/base/khmer.svg', 'Khmer'),
-];
+// ── Liquid-glass language picker ──────────────────────────────────────────────
 
 class _LangPicker extends StatefulWidget {
-  const _LangPicker({required this.ref});
-  final WidgetRef ref;
+  const _LangPicker({
+    required this.selected,
+    required this.isOpen,
+    required this.onToggle,
+    required this.onSelect,
+  });
+
+  final AppLanguage selected;
+  final bool isOpen;
+  final VoidCallback onToggle;
+  final ValueChanged<AppLanguage> onSelect;
 
   @override
   State<_LangPicker> createState() => _LangPickerState();
@@ -167,160 +203,224 @@ class _LangPicker extends StatefulWidget {
 
 class _LangPickerState extends State<_LangPicker>
     with SingleTickerProviderStateMixin {
-  bool _open = false;
-  late final AnimationController _anim;
-  late final Animation<double> _fadeAnim;
-  late final Animation<double> _slideAnim;
+  late final AnimationController _ctrl;
+  late final Animation<double> _fade;
+  late final Animation<double> _scale;
+  late final Animation<double> _chevron;
 
   @override
   void initState() {
     super.initState();
-    _anim = AnimationController(
+    _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 230),
     );
-    _fadeAnim = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
-    _slideAnim = Tween<double>(begin: -6, end: 0).animate(
-      CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic),
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _scale = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+    _chevron = Tween<double>(begin: 0.0, end: 0.5).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
+  }
+
+  @override
+  void didUpdateWidget(_LangPicker old) {
+    super.didUpdateWidget(old);
+    if (widget.isOpen != old.isOpen) {
+      widget.isOpen ? _ctrl.forward() : _ctrl.reverse();
+    }
   }
 
   @override
   void dispose() {
-    _anim.dispose();
+    _ctrl.dispose();
     super.dispose();
-  }
-
-  void _toggle() {
-    setState(() => _open = !_open);
-    _open ? _anim.forward() : _anim.reverse();
-  }
-
-  void _select(AppLanguage lang) {
-    widget.ref.read(languageProvider.notifier).state = lang;
-    setState(() => _open = false);
-    _anim.reverse();
   }
 
   @override
   Widget build(BuildContext context) {
-    final selected = widget.ref.watch(languageProvider);
-    final current = _langOptions.firstWhere((o) => o.lang == selected);
+    final current =
+        _langOptions.firstWhere((o) => o.lang == widget.selected);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
+        // ── Pill trigger ─────────────────────────────────────────────────────
         GestureDetector(
-          onTap: _toggle,
-          child: _GlassPill(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  current.label,
-                  style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
-                ),
-                const SizedBox(width: 4),
-                AnimatedRotation(
-                  turns: _open ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 15,
-                    color: Colors.white,
+          onTap: widget.onToggle,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+              child: Container(
+                width: 120,
+                height: 40,
+                padding: const EdgeInsets.only(left: 10, right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.28),
+                    width: 1,
                   ),
                 ),
-              ],
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      current.flag,
+                      width: 18,
+                      height: 18,
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        current.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                    ),
+                    RotationTransition(
+                      turns: _chevron,
+                      child: SvgPicture.asset(
+                        'assets/icons/base/caretdown.svg',
+                        width: 16,
+                        height: 16,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
+
+        // ── Animated dropdown — stays in tree during exit animation ──────────
         AnimatedBuilder(
-          animation: _anim,
-          builder: (context, child) => Opacity(
-            opacity: _fadeAnim.value,
-            child: Transform.translate(
-              offset: Offset(0, _slideAnim.value),
-              child: child,
+          animation: _ctrl,
+          builder: (context, child) {
+            if (_ctrl.value == 0) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: FadeTransition(
+                opacity: _fade,
+                child: ScaleTransition(
+                  scale: _scale,
+                  alignment: Alignment.topLeft,
+                  child: child,
+                ),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: Container(
+                width: 160,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < _langOptions.length; i++) ...[
+                      if (i > 0)
+                        Container(
+                          height: 1,
+                          color: Colors.white.withValues(alpha: 0.09),
+                        ),
+                      _DropdownItem(
+                        option: _langOptions[i],
+                        isSelected: _langOptions[i].lang == widget.selected,
+                        onTap: () => widget.onSelect(_langOptions[i].lang),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
-          child: _open
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: _GlassPill(
-                    radius: 12,
-                    child: IntrinsicWidth(
-                      stepWidth: 140,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: _langOptions
-                            .map(
-                              (o) => GestureDetector(
-                                onTap: () => _select(o.lang),
-                                child: SizedBox(
-                                  height: 36,
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          o.label,
-                                          style: AppTextStyles.labelLarge.copyWith(
-                                            fontWeight: o.lang == selected
-                                                ? FontWeight.w700
-                                                : FontWeight.w500,
-                                            color: o.lang == selected
-                                                ? Colors.white
-                                                : Colors.white70,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Icon(
-                                        Icons.check_rounded,
-                                        size: 14,
-                                        color: o.lang == selected
-                                            ? AppColors.gold
-                                            : Colors.transparent,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
         ),
       ],
     );
   }
 }
 
-class _GlassPill extends StatelessWidget {
-  const _GlassPill({required this.child, this.radius = 100});
-  final Widget child;
-  final double radius;
+// ── Dropdown row item ─────────────────────────────────────────────────────────
+
+class _DropdownItem extends StatefulWidget {
+  const _DropdownItem({
+    required this.option,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final _LangOption option;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  State<_DropdownItem> createState() => _DropdownItemState();
+}
+
+class _DropdownItemState extends State<_DropdownItem> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding:
-              const EdgeInsets.symmetric(vertical: 6, horizontal: 14),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.28),
-              width: 1,
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: (_pressed || widget.isSelected)
+              ? Colors.white.withValues(alpha: 0.11)
+              : Colors.transparent,
+        ),
+        child: Row(
+          children: [
+            SvgPicture.asset(
+              widget.option.flag,
+              width: 22,
+              height: 22,
             ),
-          ),
-          child: child,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                widget.option.label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: widget.isSelected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: Colors.white,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ),
+            if (widget.isSelected)
+              const Icon(Icons.check_rounded, size: 16, color: AppColors.gold),
+          ],
         ),
       ),
     );
