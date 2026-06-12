@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -217,8 +216,6 @@ class _LangPickerState extends State<_LangPicker>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(current.flag, width: 16, height: 16),
-                const SizedBox(width: 6),
                 Text(
                   current.label,
                   style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
@@ -263,8 +260,6 @@ class _LangPickerState extends State<_LangPicker>
                                   height: 36,
                                   child: Row(
                                     children: [
-                                      SvgPicture.asset(o.flag, width: 16, height: 16),
-                                      const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
                                           o.label,

@@ -95,7 +95,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Phone field
                     _PhoneField(
                       controller: _phoneController,
-                      onChanged: (v) => setState(() => _hasInput = v.isNotEmpty),
+                      onChanged: (v) =>
+                          setState(() => _hasInput = v.isNotEmpty),
                     ),
 
                     const SizedBox(height: 20),
@@ -117,7 +118,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Google
                     _SocialButton(
                       onTap: () {},
-                      logo: SvgPicture.string(_kGoogleSvg, width: 20, height: 20),
+                      logo:
+                          SvgPicture.string(_kGoogleSvg, width: 20, height: 20),
                       label: 'Continue with Google',
                       background: Colors.white,
                       foreground: AppColors.textPrimary,
@@ -128,7 +130,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Facebook
                     _SocialButton(
                       onTap: () {},
-                      logo: SvgPicture.string(_kFacebookSvg, width: 20, height: 20),
+                      logo: SvgPicture.string(_kFacebookSvg,
+                          width: 20, height: 20),
                       label: 'Continue with Facebook',
                       background: const Color(0xFF1877F2),
                       foreground: Colors.white,
@@ -138,27 +141,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 36),
 
                     // Terms
-                    Center(
+                    const Center(
                       child: Text.rich(
                         TextSpan(
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                             height: 1.6,
                           ),
                           children: [
-                            const TextSpan(text: 'By continuing, you agree to our '),
+                            TextSpan(text: 'By continuing, you agree to our '),
                             TextSpan(
                               text: 'Terms of Service',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.navy,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const TextSpan(text: ' and '),
+                            TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Privacy Policy',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.navy,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -175,17 +178,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Center(
                       child: GestureDetector(
                         onTap: () {},
-                        child: Text.rich(
+                        child: const Text.rich(
                           TextSpan(
-                            style: const TextStyle(fontSize: 13.5),
+                            style: TextStyle(fontSize: 13.5),
                             children: [
-                              const TextSpan(
+                              TextSpan(
                                 text: 'Already have an account?  ',
-                                style: TextStyle(color: AppColors.textSecondary),
+                                style:
+                                    TextStyle(color: AppColors.textSecondary),
                               ),
                               TextSpan(
                                 text: 'Log in',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.gold,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -277,7 +281,8 @@ class _PhoneField extends StatelessWidget {
               ),
               decoration: const InputDecoration(
                 hintText: '012 345 678',
-                hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+                hintStyle:
+                    TextStyle(color: AppColors.textSecondary, fontSize: 15),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 14),
               ),
