@@ -118,16 +118,35 @@ class _HeroCarouselState extends State<_HeroCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       height: 182,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+      clipBehavior: Clip.antiAlias,
       child: Stack(
+        fit: StackFit.expand,
         children: [
+          // Background image layer — swipes between slides
           PageView.builder(
             controller: _controller,
             itemCount: _heroSlides.length,
             onPageChanged: (i) => setState(() => _page = i),
-            itemBuilder: (context, i) => _HeroBanner(slide: _heroSlides[i]),
+            itemBuilder: (_, __) => const Image(
+              image: AssetImage('assets/images/banner.png'),
+              fit: BoxFit.cover,
+              alignment: Alignment.centerRight,
+            ),
           ),
+          // Text crossfades on page change
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 340),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: _HeroBannerText(
+              key: ValueKey(_page),
+              slide: _heroSlides[_page],
+            ),
+          ),
+          // Dot indicators
           Positioned(
             left: 0,
             right: 0,
@@ -137,7 +156,8 @@ class _HeroCarouselState extends State<_HeroCarousel> {
               children: [
                 for (var i = 0; i < _heroSlides.length; i++)
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
                     margin: const EdgeInsets.symmetric(horizontal: 3),
                     width: i == _page ? 26 : 18,
                     height: 5,
@@ -155,55 +175,42 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   }
 }
 
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.slide});
+class _HeroBannerText extends StatelessWidget {
+  const _HeroBannerText({super.key, required this.slide});
 
   final _HeroSlide slide;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 42),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Image(
-            image: AssetImage('assets/images/banner.png'),
-            fit: BoxFit.cover,
-            alignment: Alignment.centerRight,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: Text(
+              slide.title,
+              style: const TextStyle(
+                color: AppColors.gold,
+                fontSize: 21,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
+                letterSpacing: -0.4,
+              ),
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 220),
-                  child: Text(
-                    slide.title,
-                    style: const TextStyle(
-                      color: AppColors.gold,
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 195),
-                  child: Text(
-                    slide.subtitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.5,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-              ],
+          const SizedBox(height: 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 200),
+            child: Text(
+              slide.subtitle,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13.5,
+                height: 1.45,
+              ),
             ),
           ),
         ],
@@ -222,13 +229,27 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 3,
+              height: 17,
+              decoration: BoxDecoration(
+                color: AppColors.gold,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
         ),
         const MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -320,32 +341,41 @@ class _GlassNavItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
           width: 44,
           height: 30,
           decoration: BoxDecoration(
-            color: active ? AppColors.navy.withValues(alpha: 0.12) : Colors.transparent,
+            color: active
+                ? AppColors.navy.withValues(alpha: 0.12)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(15),
           ),
           alignment: Alignment.center,
-          child: SvgPicture.asset(
-            item.asset,
-            width: 22,
-            height: 22,
-            colorFilter: ColorFilter.mode(
-              active ? AppColors.navy : AppColors.textSecondary,
-              BlendMode.srcIn,
+          child: AnimatedScale(
+            scale: active ? 1.1 : 1.0,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutBack,
+            child: SvgPicture.asset(
+              item.asset,
+              width: 22,
+              height: 22,
+              colorFilter: ColorFilter.mode(
+                active ? AppColors.navy : AppColors.textSecondary,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          item.label,
+        AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 200),
           style: TextStyle(
             fontSize: 12,
             fontWeight: active ? FontWeight.w700 : FontWeight.w500,
             color: active ? AppColors.navy : AppColors.textSecondary,
           ),
+          child: Text(item.label),
         ),
       ],
     );

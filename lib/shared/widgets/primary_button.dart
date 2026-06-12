@@ -6,7 +6,7 @@ import '../../core/theme/app_colors.dart';
 /// Standard primary CTA — gold, full-width, H = 48px.
 /// [enabled] fades the button when false (still tappable for demo).
 /// [trailingIcon] defaults to the right-arrow; set null to hide.
-class PrimaryButton extends StatelessWidget {
+class PrimaryButton extends StatefulWidget {
   const PrimaryButton({
     super.key,
     required this.label,
@@ -21,32 +21,69 @@ class PrimaryButton extends StatelessWidget {
   final String? trailingIcon;
 
   @override
+  State<PrimaryButton> createState() => _PrimaryButtonState();
+}
+
+class _PrimaryButtonState extends State<PrimaryButton> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 180),
-      opacity: enabled ? 1.0 : 0.45,
-      child: SizedBox(
-        height: 48,
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: onPressed,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(label),
-              if (trailingIcon != null) ...[
-                const SizedBox(width: 6),
-                SvgPicture.asset(
-                  trailingIcon!,
-                  width: 18,
-                  height: 18,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
-                    BlendMode.srcIn,
-                  ),
+      opacity: widget.enabled ? 1.0 : 0.45,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.97 : 1.0,
+          duration: const Duration(milliseconds: 90),
+          curve: Curves.easeOut,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            height: 48,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _pressed ? AppColors.goldDark : AppColors.gold,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: _pressed ? [] : AppColors.buttonGlow,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onPressed,
+                borderRadius: BorderRadius.circular(14),
+                splashColor: Colors.white.withValues(alpha: 0.15),
+                highlightColor: Colors.transparent,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 0.15,
+                      ),
+                    ),
+                    if (widget.trailingIcon != null) ...[
+                      const SizedBox(width: 6),
+                      SvgPicture.asset(
+                        widget.trailingIcon!,
+                        width: 18,
+                        height: 18,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ),
         ),
       ),

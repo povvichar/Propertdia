@@ -30,9 +30,9 @@ class ServiceGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        mainAxisExtent: 90,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        mainAxisExtent: 92,
       ),
       itemCount: _services.length,
       itemBuilder: (context, i) => _ServiceTile(service: _services[i]),
@@ -40,45 +40,90 @@ class ServiceGrid extends StatelessWidget {
   }
 }
 
-class _ServiceTile extends StatelessWidget {
+class _ServiceTile extends StatefulWidget {
   const _ServiceTile({required this.service});
 
   final _Service service;
 
   @override
+  State<_ServiceTile> createState() => _ServiceTileState();
+}
+
+class _ServiceTileState extends State<_ServiceTile> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
       onTap: () {},
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE7E7EC), width: 1),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SvgPicture.asset(
-              service.asset,
-              width: 28,
-              height: 28,
-              colorFilter: const ColorFilter.mode(
-                AppColors.navyIcon,
-                BlendMode.srcIn,
-              ),
+      child: AnimatedScale(
+        scale: _pressed ? 0.93 : 1.0,
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: _pressed ? AppColors.goldSoft : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _pressed
+                  ? AppColors.gold.withValues(alpha: 0.35)
+                  : AppColors.border,
+              width: 1,
             ),
-            const SizedBox(height: 8),
-            Text(
-              service.label,
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+            boxShadow: _pressed
+                ? []
+                : [
+                    BoxShadow(
+                      color: AppColors.navy.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _pressed
+                      ? AppColors.gold.withValues(alpha: 0.14)
+                      : AppColors.surfaceMuted,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: SvgPicture.asset(
+                  widget.service.asset,
+                  width: 22,
+                  height: 22,
+                  colorFilter: ColorFilter.mode(
+                    _pressed ? AppColors.gold : AppColors.navyIcon,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                widget.service.label,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: _pressed ? AppColors.navy : AppColors.textPrimary,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

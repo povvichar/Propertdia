@@ -26,4 +26,51 @@ abstract class AppColors {
   static const Color border = Color(0xFFE3E6EE);
   static const Color overlayNavy = Color(0xCC1E2A47);
   static const Color danger = Color(0xFFE5484D);
+
+  // Gradients
+  static const Gradient goldShimmer = LinearGradient(
+    colors: [gold, goldDark],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const Gradient navyDepth = LinearGradient(
+    colors: [navy, navyDeep],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const Gradient photoOverlay = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0x00000000), Color(0x44000000)],
+  );
+
+  // Shadows
+  static List<BoxShadow> get cardShadow => [
+        BoxShadow(
+          color: const Color(0xFF1E2A47).withValues(alpha: 0.07),
+          blurRadius: 16,
+          spreadRadius: 0,
+          offset: const Offset(0, 4),
+        ),
+      ];
+
+  static List<BoxShadow> get cardShadowPressed => [
+        BoxShadow(
+          color: const Color(0xFF1E2A47).withValues(alpha: 0.03),
+          blurRadius: 4,
+          spreadRadius: 0,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  static List<BoxShadow> get buttonGlow => [
+        BoxShadow(
+          color: gold.withValues(alpha: 0.35),
+          blurRadius: 12,
+          spreadRadius: 0,
+          offset: const Offset(0, 4),
+        ),
+      ];
 }
