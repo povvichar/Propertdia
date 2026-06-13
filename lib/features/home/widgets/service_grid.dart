@@ -32,7 +32,7 @@ class ServiceGrid extends StatelessWidget {
         crossAxisCount: 3,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: 92,
+        mainAxisExtent: 82,
       ),
       itemCount: _services.length,
       itemBuilder: (context, i) => _ServiceTile(service: _services[i]),
@@ -90,8 +90,8 @@ class _ServiceTileState extends State<_ServiceTile> {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
-                width: 44,
-                height: 44,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: _pressed
                       ? AppColors.gold.withValues(alpha: 0.14)
@@ -101,8 +101,8 @@ class _ServiceTileState extends State<_ServiceTile> {
                 alignment: Alignment.center,
                 child: SvgPicture.asset(
                   widget.service.asset,
-                  width: 22,
-                  height: 22,
+                  width: 20,
+                  height: 20,
                   colorFilter: ColorFilter.mode(
                     _pressed ? AppColors.gold : AppColors.navyIcon,
                     BlendMode.srcIn,
