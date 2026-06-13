@@ -10,69 +10,59 @@ import '../../shared/widgets/bank_select.dart';
 import '../../shared/widgets/form_fields.dart';
 import '../../shared/widgets/glass_icon_button.dart';
 import '../../shared/widgets/map_pick_field.dart';
-import '../../shared/widgets/photo_gallery.dart';
 import '../../shared/widgets/primary_button.dart';
-import 'data/valuation.dart';
+import 'data/title_service.dart';
+import 'widgets/title_widgets.dart';
 
-class ValuationWizardScreen extends StatefulWidget {
-  const ValuationWizardScreen({super.key, required this.type});
+class TitleRequestWizardScreen extends StatefulWidget {
+  const TitleRequestWizardScreen({super.key, required this.type});
 
-  final ValuationType type;
+  final TitleServiceType type;
 
   @override
-  State<ValuationWizardScreen> createState() => _ValuationWizardScreenState();
+  State<TitleRequestWizardScreen> createState() =>
+      _TitleRequestWizardScreenState();
 }
 
-class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
-  static const _total = 4;
-
-  static const _galleryPool = [
-    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=300&q=80',
-    'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=300&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=300&q=80',
-    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&q=80',
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=300&q=80',
-    'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=300&q=80',
-    'https://images.unsplash.com/photo-1565182999561-18d7dc61c393?w=300&q=80',
-    'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=300&q=80',
-  ];
+class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
+  static const _total = 3;
 
   final _page = PageController();
   int _step = 0;
   bool _submitted = false;
 
-  // Draft fields
-  LatLng? _location;
+  String? _titleType;
   final _address = TextEditingController();
-  final _size = TextEditingController();
-  String? _landTitle;
-  String? _buildingType;
-  int _beds = 2;
-  int _baths = 2;
-  final _photos = <String>[];
-  final _name = TextEditingController();
-  ContactMethod _contact = ContactMethod.telegram;
+  LatLng? _location;
+  final _applicant = TextEditingController();
+  final _transferTo = TextEditingController();
+  ContactWay _contact = ContactWay.telegram;
   final _contactInfo = TextEditingController();
+  final _uploaded = <int>{};
   String? _bank;
 
-  late final Valuation _result;
+  late final TitleApplication _result;
+
+  bool get _isTransfer => widget.type == TitleServiceType.transfer;
 
   @override
   void dispose() {
     _page.dispose();
     _address.dispose();
-    _size.dispose();
-    _name.dispose();
+    _applicant.dispose();
+    _transferTo.dispose();
     _contactInfo.dispose();
     super.dispose();
   }
 
   bool get _canContinue => switch (_step) {
-        0 => _address.text.trim().isNotEmpty,
-        1 => _size.text.trim().isNotEmpty,
-        2 => _name.text.trim().isNotEmpty &&
-            _contactInfo.text.trim().isNotEmpty,
-        3 => _bank != null,
+        0 => _titleType != null &&
+            _address.text.trim().isNotEmpty &&
+            _applicant.text.trim().isNotEmpty &&
+            _contactInfo.text.trim().isNotEmpty &&
+            (!_isTransfer || _transferTo.text.trim().isNotEmpty),
+        1 => _uploaded.length == widget.type.requiredDocs.length,
+        2 => _bank != null,
         _ => false,
       };
 
@@ -86,11 +76,9 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
     if (!_canContinue) return;
     if (_step < _total - 1) {
       setState(() => _step++);
-      _page.animateToPage(
-        _step,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
+      _page.animateToPage(_step,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic);
     } else {
       _submit();
     }
@@ -102,34 +90,24 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       return;
     }
     setState(() => _step--);
-    _page.animateToPage(
-      _step,
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOutCubic,
-    );
+    _page.animateToPage(_step,
+        duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
   }
 
   void _submit() {
-    final isLand = widget.type == ValuationType.land;
-    _result = Valuation(
+    _result = TitleApplication(
       id: 'new',
-      refNo: 'VL-2026-${DateTime.now().millisecondsSinceEpoch % 9000 + 1000}',
+      refNo: 'TS-2026-${DateTime.now().millisecondsSinceEpoch % 9000 + 1000}',
       type: widget.type,
-      status: ValuationStatus.requested,
+      status: TitleStatus.requested,
+      titleType: _titleType!,
       address: _address.text.trim(),
-      applicantName: _name.text.trim(),
-      lat: _location?.latitude,
-      lng: _location?.longitude,
-      purpose: ValuationPurpose.sale,
-      propertyType: isLand ? 'Land' : (_buildingType ?? 'Villa'),
-      contactMethod: _contact,
+      applicantName: _applicant.text.trim(),
+      contactWay: _contact,
       contactInfo: _contactInfo.text.trim(),
       submittedDate: DateTime.now(),
-      landSize: isLand ? _size.text.trim() : null,
-      buildingSize: isLand ? null : _size.text.trim(),
-      beds: isLand ? null : _beds,
-      baths: isLand ? null : _baths,
-      photoCount: _photos.length,
+      documents: widget.type.requiredDocs,
+      transferTo: _isTransfer ? _transferTo.text.trim() : null,
     );
     FocusScope.of(context).unfocus();
     setState(() => _submitted = true);
@@ -138,9 +116,8 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   @override
   Widget build(BuildContext context) {
     if (_submitted) {
-      return _SuccessView(valuation: _result, fee: widget.type.fee);
+      return _SuccessView(app: _result);
     }
-
     final lastStep = _step == _total - 1;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -161,9 +138,8 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
                   controller: _page,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    _stepLocation(),
                     _stepDetails(),
-                    _stepPhotosContact(),
+                    _stepDocuments(),
                     _stepReview(),
                   ],
                 ),
@@ -182,19 +158,24 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
     );
   }
 
-  // ── Steps ──────────────────────────────────────────────────────────────
-
   Widget _wrap(List<Widget> children) => ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: children,
       );
 
-  Widget _stepLocation() => _wrap([
+  Widget _stepDetails() => _wrap([
         const StepHeader(
-          title: 'Where is the property?',
-          subtitle: 'Enter the location and pin it on the map.',
+          title: 'Property & applicant',
+          subtitle: 'Tell us about the title and who is applying.',
         ),
         const SizedBox(height: 20),
+        const FieldLabel('Title type'),
+        ChoiceChipsRow(
+          options: kTitleTypes,
+          selected: _titleType,
+          onSelect: (t) => setState(() => _titleType = t),
+        ),
+        const SizedBox(height: 18),
         const FieldLabel('Location'),
         InputField(
           controller: _address,
@@ -204,177 +185,166 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         ),
         const SizedBox(height: 10),
         MapPickField(location: _location, onPick: _pickOnMap),
-      ]);
-
-  Widget _stepDetails() {
-    final isLand = widget.type == ValuationType.land;
-    return _wrap([
-      StepHeader(
-        title: isLand ? 'Land details' : 'Building details',
-        subtitle: 'Provide the measurements and key attributes.',
-      ),
-      const SizedBox(height: 20),
-      FieldLabel(isLand ? 'Land size' : 'Building size'),
-      InputField(
-        controller: _size,
-        hint: 'e.g. 320',
-        suffix: 'm²',
-        keyboardType: TextInputType.number,
-        onChanged: (_) => setState(() {}),
-      ),
-      const SizedBox(height: 18),
-      if (isLand) ...[
-        const FieldLabel('Land title type'),
-        ChoiceChipsRow(
-          options: kLandTitles,
-          selected: _landTitle,
-          onSelect: (t) => setState(() => _landTitle = t),
-        ),
-      ] else ...[
-        const FieldLabel('Property type'),
-        ChoiceChipsRow(
-          options: const ['Villa', 'Condo', 'Apartment', 'Shophouse', 'Townhouse'],
-          selected: _buildingType,
-          onSelect: (t) => setState(() => _buildingType = t),
-        ),
         const SizedBox(height: 18),
-        const FieldLabel('Rooms'),
-        CounterField(
-          label: 'Bedrooms',
-          asset: 'assets/icons/base/bed.svg',
-          value: _beds,
-          onChanged: (v) => setState(() => _beds = v),
-        ),
-        const SizedBox(height: 10),
-        CounterField(
-          label: 'Bathrooms',
-          asset: 'assets/icons/base/bath.svg',
-          value: _baths,
-          onChanged: (v) => setState(() => _baths = v),
-        ),
-      ],
-    ]);
-  }
-
-  Widget _stepPhotosContact() => _wrap([
-        const StepHeader(
-          title: 'Photos & contact',
-          subtitle: 'Add photos for the valuer and tell us how to reach you.',
-        ),
-        const SizedBox(height: 20),
-        const FieldLabel('Property photos'),
-        PhotoGalleryField(
-          photos: _photos,
-          onAdd: () => setState(
-              () => _photos.add(_galleryPool[_photos.length % _galleryPool.length])),
-          onRemoveAt: (i) => setState(() => _photos.removeAt(i)),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '${_photos.length} photo${_photos.length == 1 ? '' : 's'} added',
-          style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 20),
-        const FieldLabel('Your name'),
+        FieldLabel(_isTransfer ? 'Current owner (seller)' : 'Applicant full name'),
         InputField(
-          controller: _name,
+          controller: _applicant,
           hint: 'e.g. Chan Rithy',
           onChanged: (_) => setState(() {}),
         ),
+        if (_isTransfer) ...[
+          const SizedBox(height: 18),
+          const FieldLabel('Transfer to (buyer)'),
+          InputField(
+            controller: _transferTo,
+            hint: 'e.g. Sok Dara',
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
         const SizedBox(height: 18),
         const FieldLabel('Contact method'),
         ChoiceChipsRow(
           options: const ['Telegram', 'Phone'],
-          selected: _contact == ContactMethod.telegram ? 'Telegram' : 'Phone',
+          selected: _contact == ContactWay.telegram ? 'Telegram' : 'Phone',
           onSelect: (v) => setState(() => _contact =
-              v == 'Telegram' ? ContactMethod.telegram : ContactMethod.phone),
+              v == 'Telegram' ? ContactWay.telegram : ContactWay.phone),
         ),
         const SizedBox(height: 14),
         InputField(
           controller: _contactInfo,
-          hint: _contact == ContactMethod.telegram
+          hint: _contact == ContactWay.telegram
               ? '@username'
               : '+855 12 345 678',
-          keyboardType: _contact == ContactMethod.phone
+          keyboardType: _contact == ContactWay.phone
               ? TextInputType.phone
               : TextInputType.text,
           onChanged: (_) => setState(() {}),
         ),
       ]);
 
-  Widget _stepReview() {
-    final isLand = widget.type == ValuationType.land;
+  Widget _stepDocuments() {
+    final docs = widget.type.requiredDocs;
     return _wrap([
       const StepHeader(
-        title: 'Review & payment',
-        subtitle: 'Confirm the details and choose a payment method.',
-      ),
-      const SizedBox(height: 18),
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          children: [
-            _row('Type', widget.type.label),
-            _row('Location', _address.text.trim()),
-            if (_location != null) _row('Pinned', formatLatLng(_location!)),
-            _row(isLand ? 'Land size' : 'Building size', '${_size.text} m²'),
-            if (isLand && _landTitle != null) _row('Title', _landTitle!),
-            if (!isLand) _row('Property', _buildingType ?? 'Villa'),
-            if (!isLand) _row('Rooms', '$_beds bd · $_baths ba'),
-            _row('Photos', '${_photos.length} added'),
-            _row('Applicant', _name.text.trim()),
-            _row('Contact', _contactInfo.text.trim(), last: true),
-          ],
-        ),
+        title: 'Upload documents',
+        subtitle: 'Attach clear scans or photos. All documents are required.',
       ),
       const SizedBox(height: 16),
-      // Fee summary
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            const Text(
-              'Service fee',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              usd(widget.type.fee),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.navy,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 20),
-      const FieldLabel('Payment method'),
-      for (final b in kBanks) ...[
-        BankTile(
-          bank: b,
-          selected: _bank == b.id,
-          onTap: () => setState(() => _bank = b.id),
+      for (var i = 0; i < docs.length; i++) ...[
+        DocUploadTile(
+          name: docs[i],
+          uploaded: _uploaded.contains(i),
+          onTap: () => setState(() {
+            _uploaded.contains(i) ? _uploaded.remove(i) : _uploaded.add(i);
+          }),
         ),
         const SizedBox(height: 10),
       ],
+      const SizedBox(height: 6),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            SvgPicture.asset(
+              'assets/icons/base/locked.svg',
+              width: 16,
+              height: 16,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.navyIcon, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Documents are encrypted and shared only with the cadastral office.',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        '${_uploaded.length} / ${docs.length} uploaded',
+        style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+      ),
     ]);
   }
+
+  Widget _stepReview() => _wrap([
+        const StepHeader(
+          title: 'Review & payment',
+          subtitle: 'Confirm the details and choose a payment method.',
+        ),
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: [
+              _row('Service', widget.type.label),
+              _row('Title type', _titleType ?? '—'),
+              _row('Location', _address.text.trim()),
+              if (_location != null) _row('Pinned', formatLatLng(_location!)),
+              _row(_isTransfer ? 'Seller' : 'Applicant', _applicant.text.trim()),
+              if (_isTransfer) _row('Buyer', _transferTo.text.trim()),
+              _row('Documents', '${_uploaded.length} attached'),
+              _row('Contact', _contactInfo.text.trim(), last: true),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const Text(
+                'Service fee',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                usd(widget.type.fee),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.navy,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        const FieldLabel('Payment method'),
+        for (final b in kBanks) ...[
+          BankTile(
+            bank: b,
+            selected: _bank == b.id,
+            onTap: () => setState(() => _bank = b.id),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ]);
 
   Widget _row(String k, String v, {bool last = false}) {
     return Padding(
@@ -553,10 +523,9 @@ class _BottomBar extends StatelessWidget {
 // ── Success ──────────────────────────────────────────────────────────────
 
 class _SuccessView extends StatelessWidget {
-  const _SuccessView({required this.valuation, required this.fee});
+  const _SuccessView({required this.app});
 
-  final Valuation valuation;
-  final int fee;
+  final TitleApplication app;
 
   @override
   Widget build(BuildContext context) {
@@ -592,7 +561,7 @@ class _SuccessView extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'Payment successful',
+                  'Application submitted',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -602,7 +571,7 @@ class _SuccessView extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your ${valuation.type.label.toLowerCase()} request has been submitted. We’ll review it within 3–5 business days.',
+                  'Your ${app.type.label.toLowerCase()} request is now being processed. We’ll notify you of every status update.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 14,
@@ -612,8 +581,8 @@ class _SuccessView extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 18, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
@@ -631,7 +600,7 @@ class _SuccessView extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        valuation.refNo,
+                        app.refNo,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -646,10 +615,8 @@ class _SuccessView extends StatelessWidget {
                 PrimaryButton(
                   label: 'Track status',
                   trailingIcon: null,
-                  onPressed: () => context.pushReplacement(
-                    '/estimate/detail',
-                    extra: valuation,
-                  ),
+                  onPressed: () =>
+                      context.pushReplacement('/title/detail', extra: app),
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
@@ -657,7 +624,7 @@ class _SuccessView extends StatelessWidget {
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
-                      'Back to Estimate',
+                      'Back to Title Services',
                       style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,

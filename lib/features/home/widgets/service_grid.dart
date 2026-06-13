@@ -17,8 +17,10 @@ const _services = [
   _Service('assets/icons/home/map_price.svg', 'Map Price', route: '/map-price'),
   _Service('assets/icons/home/property_estimate.svg', 'Estimate',
       route: '/estimate'),
-  _Service('assets/icons/home/title_services.svg', 'Title Services'),
-  _Service('assets/icons/home/force_sale.svg', 'Force Sale'),
+  _Service('assets/icons/home/title_services.svg', 'Title Services',
+      route: '/title'),
+  _Service('assets/icons/home/force_sale.svg', 'Force Sale',
+      route: '/force-sale'),
   _Service('assets/icons/home/invest_loan.svg', 'Invest & Loan'),
   _Service('assets/icons/home/partnership.svg', 'Partnership', multiColor: true),
 ];

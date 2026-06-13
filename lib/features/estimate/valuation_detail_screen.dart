@@ -184,7 +184,9 @@ class _SummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${v.district} · ${v.refNo}',
+                      v.province.isEmpty
+                          ? v.refNo
+                          : '${v.province} · ${v.refNo}',
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: AppColors.textSecondary,
@@ -202,13 +204,16 @@ class _SummaryCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 12,
             children: [
-              _Fact(label: 'Purpose', value: v.purpose.label),
+              if (v.applicantName.isNotEmpty)
+                _Fact(label: 'Applicant', value: v.applicantName),
               _Fact(
                 label: isLand ? 'Land size' : 'Building size',
                 value: '${isLand ? v.landSize : v.buildingSize} m²',
               ),
               if (!isLand && v.beds != null)
                 _Fact(label: 'Rooms', value: '${v.beds} bd · ${v.baths} ba'),
+              if (v.photoCount > 0)
+                _Fact(label: 'Photos', value: '${v.photoCount} attached'),
               _Fact(label: 'Submitted', value: shortDate(v.submittedDate)),
               _Fact(
                 label: 'Contact',

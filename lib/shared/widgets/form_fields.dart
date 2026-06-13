@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../core/theme/app_colors.dart';
+import '../../core/theme/app_colors.dart';
 
 /// Heading + optional subtitle at the top of each wizard step.
 class StepHeader extends StatelessWidget {
@@ -302,6 +302,7 @@ class CounterField extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.asset,
     this.min = 0,
     this.max = 20,
   });
@@ -309,6 +310,7 @@ class CounterField extends StatelessWidget {
   final String label;
   final int value;
   final ValueChanged<int> onChanged;
+  final String? asset;
   final int min;
   final int max;
 
@@ -322,6 +324,16 @@ class CounterField extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (asset != null) ...[
+            SvgPicture.asset(
+              asset!,
+              width: 19,
+              height: 19,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.navyIcon, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 10),
+          ],
           Expanded(
             child: Text(
               label,

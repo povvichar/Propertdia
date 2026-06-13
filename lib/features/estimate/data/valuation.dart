@@ -71,12 +71,15 @@ class Valuation {
     required this.type,
     required this.status,
     required this.address,
-    required this.district,
+    this.province = '',
     required this.purpose,
     required this.propertyType,
     required this.contactMethod,
     required this.contactInfo,
     required this.submittedDate,
+    this.applicantName = '',
+    this.lat,
+    this.lng,
     this.landSize,
     this.buildingSize,
     this.beds,
@@ -93,12 +96,15 @@ class Valuation {
   final ValuationType type;
   final ValuationStatus status;
   final String address;
-  final String district;
+  final String province;
   final ValuationPurpose purpose;
   final String propertyType;
   final ContactMethod contactMethod;
   final String contactInfo;
   final DateTime submittedDate;
+  final String applicantName;
+  final double? lat;
+  final double? lng;
   final String? landSize;
   final String? buildingSize;
   final int? beds;
@@ -132,62 +138,7 @@ String shortDate(DateTime d) {
   return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
 
-const kDistricts = [
-  'Daun Penh',
-  'Chamkarmon',
-  'BKK1',
-  'Tonle Bassac',
-  'Tuol Kork',
-  'Sen Sok',
-  'Chroy Changvar',
-  'Mean Chey',
-  'Por Senchey',
-];
-
 const kLandTitles = ['Hard Title', 'Soft Title', 'LMAP Title'];
-
-/// Cambodian bank / wallet payment channels.
-class BankOption {
-  const BankOption({
-    required this.id,
-    required this.name,
-    required this.subtitle,
-    required this.logoAsset,
-    required this.logoBg,
-  });
-
-  final String id;
-  final String name;
-  final String subtitle;
-  final String logoAsset;
-
-  /// Badge background — dark for white wordmarks (ABA), light for full-color logos.
-  final Color logoBg;
-}
-
-const kBanks = [
-  BankOption(
-    id: 'aba',
-    name: 'ABA Bank',
-    subtitle: 'Pay with ABA Mobile',
-    logoAsset: 'assets/icons/base/aba.svg',
-    logoBg: Color(0xFF0A2240),
-  ),
-  BankOption(
-    id: 'acleda',
-    name: 'ACLEDA Bank',
-    subtitle: 'ACLEDA mobile · XPay',
-    logoAsset: 'assets/icons/base/acleda.svg',
-    logoBg: Colors.white,
-  ),
-  BankOption(
-    id: 'wing',
-    name: 'Wing Bank',
-    subtitle: 'Wing account',
-    logoAsset: 'assets/icons/base/wing.svg',
-    logoBg: Colors.white,
-  ),
-];
 
 /// Existing valuation requests shown on the hub for progress tracking.
 final mockValuations = <Valuation>[
@@ -197,7 +148,8 @@ final mockValuations = <Valuation>[
     type: ValuationType.building,
     status: ValuationStatus.completed,
     address: 'No. 12, Street 310, BKK1',
-    district: 'BKK1',
+    province: 'Phnom Penh',
+    applicantName: 'Chan Rithy',
     purpose: ValuationPurpose.sale,
     propertyType: 'Villa',
     contactMethod: ContactMethod.telegram,
@@ -211,14 +163,17 @@ final mockValuations = <Valuation>[
     valueHigh: 540000,
     comparables: 7,
     photoCount: 6,
+    lat: 11.5486,
+    lng: 104.9225,
   ),
   Valuation(
     id: 'v2',
     refNo: 'VL-2026-0521',
     type: ValuationType.land,
     status: ValuationStatus.inReview,
-    address: 'Borey Peng Huoth, Street 2011, Sen Sok',
-    district: 'Sen Sok',
+    address: 'National Road 6, Svay Dangkum',
+    province: 'Siem Reap',
+    applicantName: 'Sophea Lim',
     purpose: ValuationPurpose.mortgage,
     propertyType: 'Land',
     contactMethod: ContactMethod.phone,
@@ -227,18 +182,21 @@ final mockValuations = <Valuation>[
     landSize: '480',
     comparables: 0,
     photoCount: 4,
+    lat: 13.3633,
+    lng: 103.8564,
   ),
   Valuation(
     id: 'v3',
     refNo: 'VL-2026-0530',
     type: ValuationType.building,
     status: ValuationStatus.approved,
-    address: 'Unit 18F, Peak Tower, Tonle Bassac',
-    district: 'Tonle Bassac',
+    address: 'Ochheuteal Beach Road, Sangkat 4',
+    province: 'Preah Sihanouk',
+    applicantName: 'Dara Kim',
     purpose: ValuationPurpose.legal,
     propertyType: 'Condo',
     contactMethod: ContactMethod.telegram,
-    contactInfo: '@sophea',
+    contactInfo: '@darakim',
     submittedDate: DateTime(2026, 6, 9),
     buildingSize: '96',
     beds: 2,
@@ -248,5 +206,7 @@ final mockValuations = <Valuation>[
     valueHigh: 179000,
     comparables: 5,
     photoCount: 5,
+    lat: 10.6093,
+    lng: 103.5295,
   ),
 ];
