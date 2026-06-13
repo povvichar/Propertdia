@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 
 class _Service {
-  const _Service(this.asset, this.label);
+  const _Service(this.asset, this.label, {this.multiColor = false, this.route});
 
   final String asset;
   final String label;
+  final bool multiColor;
+  final String? route;
 }
 
 const _services = [
-  _Service('assets/icons/home/map_price.svg', 'Map Price'),
-  _Service('assets/icons/home/property_estimate.svg', 'Estimate'),
+  _Service('assets/icons/home/map_price.svg', 'Map Price', route: '/map-price'),
+  _Service('assets/icons/home/property_estimate.svg', 'Estimate',
+      route: '/estimate'),
   _Service('assets/icons/home/title_services.svg', 'Title Services'),
   _Service('assets/icons/home/force_sale.svg', 'Force Sale'),
   _Service('assets/icons/home/invest_loan.svg', 'Invest & Loan'),
-  _Service('assets/icons/home/partnership.svg', 'Partnership'),
+  _Service('assets/icons/home/partnership.svg', 'Partnership', multiColor: true),
 ];
 
 class ServiceGrid extends StatelessWidget {
@@ -32,7 +36,7 @@ class ServiceGrid extends StatelessWidget {
         crossAxisCount: 3,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: 82,
+        mainAxisExtent: 78,
       ),
       itemCount: _services.length,
       itemBuilder: (context, i) => _ServiceTile(service: _services[i]),
@@ -58,7 +62,10 @@ class _ServiceTileState extends State<_ServiceTile> {
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {},
+      onTap: () {
+        final route = widget.service.route;
+        if (route != null) context.push(route);
+      },
       child: AnimatedScale(
         scale: _pressed ? 0.93 : 1.0,
         duration: const Duration(milliseconds: 110),
@@ -67,49 +74,31 @@ class _ServiceTileState extends State<_ServiceTile> {
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
           decoration: BoxDecoration(
-            color: _pressed ? AppColors.goldSoft : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _pressed
-                  ? AppColors.gold.withValues(alpha: 0.35)
-                  : AppColors.border,
-              width: 1,
-            ),
-            boxShadow: _pressed
-                ? []
-                : [
-                    BoxShadow(
-                      color: AppColors.navy.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: _pressed
-                      ? AppColors.gold.withValues(alpha: 0.14)
-                      : AppColors.surfaceMuted,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: SvgPicture.asset(
-                  widget.service.asset,
-                  width: 20,
-                  height: 20,
-                  colorFilter: ColorFilter.mode(
-                    _pressed ? AppColors.gold : AppColors.navyIcon,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              widget.service.multiColor
+                  ? Opacity(
+                      opacity: _pressed ? 0.6 : 1.0,
+                      child: SvgPicture.asset(
+                        widget.service.asset,
+                        width: 24,
+                        height: 24,
+                      ),
+                    )
+                  : SvgPicture.asset(
+                      widget.service.asset,
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(
+                        _pressed ? AppColors.gold : AppColors.navyIcon,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+              const SizedBox(height: 6),
               Text(
                 widget.service.label,
                 maxLines: 1,

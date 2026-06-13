@@ -54,17 +54,17 @@ class _HomeBody extends StatelessWidget {
                 const _HeroCarousel(),
                 const SizedBox(height: 20),
                 const ServiceGrid(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
                 const _SectionTitle(title: 'Best Price'),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 SizedBox(
-                  height: 230,
+                  height: 218,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: mockBestPrice.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, i) =>
-                        PropertyCard(property: mockBestPrice[i], width: 172),
+                        PropertyCard(property: mockBestPrice[i], width: 220),
                   ),
                 ),
                 const SizedBox(height: 110),
@@ -77,143 +77,20 @@ class _HomeBody extends StatelessWidget {
   }
 }
 
-class _HeroSlide {
-  const _HeroSlide(this.title, this.subtitle);
-
-  final String title;
-  final String subtitle;
-}
-
-const _heroSlides = [
-  _HeroSlide(
-    'Discover Your Dream Property',
-    'Browse houses, condos & lands across Cambodia.',
-  ),
-  _HeroSlide(
-    'Real Prices on the Map',
-    'Live market prices and trends by area.',
-  ),
-  _HeroSlide(
-    'Trusted Title Services',
-    'Verify ownership with local experts.',
-  ),
-];
-
-class _HeroCarousel extends StatefulWidget {
+class _HeroCarousel extends StatelessWidget {
   const _HeroCarousel();
 
   @override
-  State<_HeroCarousel> createState() => _HeroCarouselState();
-}
-
-class _HeroCarouselState extends State<_HeroCarousel> {
-  final _controller = PageController();
-  int _page = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 162,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background image layer — swipes between slides
-          PageView.builder(
-            controller: _controller,
-            itemCount: _heroSlides.length,
-            onPageChanged: (i) => setState(() => _page = i),
-            itemBuilder: (_, __) => const Image(
-              image: AssetImage('assets/images/banner.png'),
-              fit: BoxFit.cover,
-              alignment: Alignment.centerRight,
-            ),
-          ),
-          // Text crossfades on page change
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 340),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            child: _HeroBannerText(
-              key: ValueKey(_page),
-              slide: _heroSlides[_page],
-            ),
-          ),
-          // Dot indicators
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 14,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < _heroSlides.length; i++)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == _page ? 24 : 16,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: i == _page ? AppColors.gold : Colors.white38,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroBannerText extends StatelessWidget {
-  const _HeroBannerText({super.key, required this.slide});
-
-  final _HeroSlide slide;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 20, 36),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: Text(
-              slide.title,
-              style: const TextStyle(
-                color: AppColors.gold,
-                fontSize: 21,
-                fontWeight: FontWeight.w700,
-                height: 1.25,
-                letterSpacing: -0.4,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 170),
-            child: Text(
-              slide.subtitle,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13.5,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: const SizedBox(
+        height: 148,
+        width: double.infinity,
+        child: Image(
+          image: AssetImage('assets/images/banner.png'),
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
@@ -226,27 +103,14 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 3,
-          height: 17,
-          decoration: BoxDecoration(
-            color: AppColors.gold,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.2,
-          ),
-        ),
-      ],
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        letterSpacing: -0.3,
+      ),
     );
   }
 }

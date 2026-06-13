@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/property.dart';
@@ -24,7 +25,7 @@ class _PropertyCardState extends State<PropertyCard> {
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {},
+      onTap: () => context.push('/property'),
       child: AnimatedScale(
         scale: _pressed ? 0.96 : 1.0,
         duration: const Duration(milliseconds: 110),
@@ -43,7 +44,7 @@ class _PropertyCardState extends State<PropertyCard> {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                 child: SizedBox(
-                  height: 140,
+                  height: 128,
                   width: double.infinity,
                   child: Stack(
                     fit: StackFit.expand,
@@ -70,7 +71,7 @@ class _PropertyCardState extends State<PropertyCard> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -136,14 +137,14 @@ class _GlassTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(6),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.6),
               width: 0.8,

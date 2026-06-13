@@ -13,7 +13,7 @@ class HomeHeader extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
         child: Column(
           children: [
             Row(
@@ -71,7 +71,7 @@ class HomeHeader extends StatelessWidget {
                 const _NotificationBell(),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             const _SearchBar(),
           ],
         ),
@@ -108,14 +108,35 @@ class _NotificationBell extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends StatefulWidget {
   const _SearchBar();
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  final _focus = FocusNode();
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 48,
       child: TextField(
+        focusNode: _focus,
         decoration: InputDecoration(
           hintText: 'Search condo, borey, land...',
           hintStyle: const TextStyle(
@@ -123,13 +144,13 @@ class _SearchBar extends StatelessWidget {
             fontSize: 14,
           ),
           prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 16, right: 10),
+            padding: const EdgeInsets.only(left: 18, right: 10),
             child: SvgPicture.asset(
               'assets/icons/base/search.svg',
-              width: 20,
-              height: 20,
-              colorFilter: const ColorFilter.mode(
-                AppColors.textSecondary,
+              width: 18,
+              height: 18,
+              colorFilter: ColorFilter.mode(
+                _focused ? AppColors.navy : AppColors.textSecondary,
                 BlendMode.srcIn,
               ),
             ),
@@ -148,7 +169,7 @@ class _SearchBar extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(26),
-            borderSide: const BorderSide(color: Color(0xFFE7E7EC), width: 1),
+            borderSide: BorderSide(color: AppColors.navy.withValues(alpha: 0.3), width: 1.5),
           ),
         ),
       ),

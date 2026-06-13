@@ -17,7 +17,7 @@ abstract class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
     );
 
-    final textTheme = GoogleFonts.interTextTheme(base.textTheme).apply(
+    final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
     );
