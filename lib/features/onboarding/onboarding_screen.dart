@@ -52,7 +52,7 @@ class _LangOption {
 
 const _langOptions = [
   _LangOption(AppLanguage.english, 'assets/icons/base/english.svg', 'English'),
-  _LangOption(AppLanguage.khmer, 'assets/icons/base/khmer.svg', 'Khmer'),
+  _LangOption(AppLanguage.khmer, 'assets/icons/base/khmer.svg', 'ភាសាខ្មែរ'),
 ];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -119,6 +119,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _LangPicker(
                         selected: selected,

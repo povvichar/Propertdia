@@ -1,17 +1,4 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ -n \"$branch\" ] && [ \"$branch\" != \"HEAD\" ]; then git pull origin \"$branch\" 2>&1 || true; fi",
-            "statusMessage": "Pulling latest updates..."
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Skill(run)",
@@ -48,11 +35,26 @@
       "Bash(pkill -f \"flutter_tools\")",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(flutter clean *)",
+      "Bash(git pull *)"
     ],
     "additionalDirectories": [
       "/Users/min/.claude/projects/-Users-min-propertdia/memory",
       "/tmp"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ -n \"$branch\" ] && [ \"$branch\" != \"HEAD\" ]; then git pull origin \"$branch\" 2>&1 || true; fi",
+            "statusMessage": "Pulling latest updates..."
+          }
+        ]
+      }
     ]
   }
 }

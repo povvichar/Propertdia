@@ -47,7 +47,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
             decoration: BoxDecoration(
               color: _pressed ? AppColors.goldDark : AppColors.gold,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: _pressed ? [] : AppColors.buttonGlow,
+              boxShadow: const [],
             ),
             child: Material(
               color: Colors.transparent,
