@@ -13,7 +13,7 @@ class HomeHeader extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
         child: Column(
           children: [
             Row(
@@ -43,7 +43,7 @@ class HomeHeader extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 0),
                       const Text(
                         'Phnom Penh',
                         style: TextStyle(
@@ -60,7 +60,7 @@ class HomeHeader extends StatelessWidget {
                   width: 24,
                   height: 24,
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 const Image(
                   image: AssetImage('assets/images/logo_mark.png'),
                   width: 24,
@@ -71,7 +71,7 @@ class HomeHeader extends StatelessWidget {
                 const _NotificationBell(),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             const _SearchBar(),
           ],
         ),
@@ -114,7 +114,7 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 46,
+      height: 48,
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Search condo, borey, land...',
@@ -123,21 +123,21 @@ class _SearchBar extends StatelessWidget {
             fontSize: 14,
           ),
           prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 14, right: 10),
+            padding: const EdgeInsets.only(left: 16, right: 10),
             child: SvgPicture.asset(
               'assets/icons/base/search.svg',
-              width: 18,
-              height: 18,
+              width: 20,
+              height: 20,
               colorFilter: const ColorFilter.mode(
                 AppColors.textSecondary,
                 BlendMode.srcIn,
               ),
             ),
           ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 46),
+          prefixIconConstraints: const BoxConstraints(minWidth: 48),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(26),
             borderSide: const BorderSide(color: Color(0xFFE7E7EC), width: 1),

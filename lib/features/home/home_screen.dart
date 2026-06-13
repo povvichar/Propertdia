@@ -52,19 +52,19 @@ class _HomeBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const _HeroCarousel(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
                 const ServiceGrid(),
-                const SizedBox(height: 26),
+                const SizedBox(height: 22),
                 const _SectionTitle(title: 'Best Price'),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 SizedBox(
-                  height: 215,
+                  height: 230,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: mockBestPrice.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, i) =>
-                        PropertyCard(property: mockBestPrice[i], width: 168),
+                        PropertyCard(property: mockBestPrice[i], width: 172),
                   ),
                 ),
                 const SizedBox(height: 110),
@@ -119,7 +119,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 182,
+      height: 162,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -159,8 +159,8 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
                     margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == _page ? 26 : 18,
-                    height: 5,
+                    width: i == _page ? 24 : 16,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: i == _page ? AppColors.gold : Colors.white38,
                       borderRadius: BorderRadius.circular(3),
@@ -183,13 +183,13 @@ class _HeroBannerText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 42),
+      padding: const EdgeInsets.fromLTRB(24, 20, 20, 36),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 220),
+            constraints: const BoxConstraints(maxWidth: 180),
             child: Text(
               slide.title,
               style: const TextStyle(
@@ -203,7 +203,7 @@ class _HeroBannerText extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 200),
+            constraints: const BoxConstraints(maxWidth: 170),
             child: Text(
               slide.subtitle,
               style: const TextStyle(
@@ -227,39 +227,23 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 3,
-              height: 17,
-              decoration: BoxDecoration(
-                color: AppColors.gold,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.2,
-              ),
-            ),
-          ],
+        Container(
+          width: 3,
+          height: 17,
+          decoration: BoxDecoration(
+            color: AppColors.gold,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
-        const MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: Text(
-            'See all',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.gold,
-            ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.2,
           ),
         ),
       ],
