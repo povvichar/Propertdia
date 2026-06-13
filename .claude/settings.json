@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ -n \"$branch\" ] && [ \"$branch\" != \"HEAD\" ]; then git pull origin \"$branch\" 2>&1 || true; fi",
+            "statusMessage": "Pulling latest updates..."
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Skill(run)",
@@ -18,7 +31,28 @@
       "Read(//private/tmp/**)",
       "Bash(pkill -f \"flutter_tools\\\\|flutter run\")",
       "Bash(osascript -e 'tell application \"Terminal\" *)",
-      "Bash(expect -c ' *)"
+      "Bash(expect -c ' *)",
+      "Bash(mkdir -p /Users/min/.claude/projects/-Users-min-propertdia/memory)",
+      "Bash(flutter devices *)",
+      "Bash(flutter emulators *)",
+      "Bash(open -a Xcode)",
+      "Bash(osascript -e 'tell application \"Xcode\" to activate' -e 'tell application \"System Events\" to keystroke \"2\" using {shift down, command down}')",
+      "Bash(open \"xcode://showDevicesWindow\")",
+      "Bash(xcodebuild -checkFirstLaunchStatus)",
+      "Bash(open /Users/min/propertdia/ios/Runner.xcworkspace)",
+      "Bash(printf 'r' > /tmp/flutter_ctl 2>&1 || echo \"pipe not active\")",
+      "Bash(curl -s \"http://127.0.0.1:50114/TvhTnuv6Jko=/hotReload\" -X POST)",
+      "Bash(curl -s \"http://127.0.0.1:50114/TvhTnuv6Jko=/ws\" --include)",
+      "Bash(dart pub *)",
+      "Bash(flutter --no-version-check attach --device-id 00008120-000431841458201E --debug-url http://127.0.0.1:50114/TvhTnuv6Jko=/)",
+      "Bash(pkill -f \"flutter_tools\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ],
+    "additionalDirectories": [
+      "/Users/min/.claude/projects/-Users-min-propertdia/memory",
+      "/tmp"
     ]
   }
 }
