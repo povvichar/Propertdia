@@ -43,7 +43,7 @@ class _PropertyCardState extends State<PropertyCard> {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                 child: SizedBox(
-                  height: 120,
+                  height: 140,
                   width: double.infinity,
                   child: Stack(
                     fit: StackFit.expand,
@@ -70,7 +70,7 @@ class _PropertyCardState extends State<PropertyCard> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 9, 10, 11),
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -79,7 +79,7 @@ class _PropertyCardState extends State<PropertyCard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                         letterSpacing: -0.2,
@@ -111,7 +111,7 @@ class _PropertyCardState extends State<PropertyCard> {
                     Text(
                       widget.property.price,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppColors.navy,
                         letterSpacing: -0.3,
