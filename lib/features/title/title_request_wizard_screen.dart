@@ -8,9 +8,10 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/data/cambodia.dart';
 import '../../shared/widgets/bank_select.dart';
 import '../../shared/widgets/form_fields.dart';
-import '../../shared/widgets/glass_icon_button.dart';
 import '../../shared/widgets/map_pick_field.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/wizard_bottom_bar.dart';
+import '../../shared/widgets/wizard_header.dart';
 import 'data/title_service.dart';
 import 'widgets/title_widgets.dart';
 
@@ -66,6 +67,30 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         _ => false,
       };
 
+  String? get _validationHint {
+    if (_canContinue) return null;
+    return switch (_step) {
+      0 => _titleType == null
+          ? 'Select a title type to continue'
+          : _address.text.trim().isEmpty
+              ? 'Enter the property location to continue'
+              : _applicant.text.trim().isEmpty
+                  ? 'Enter the applicant name to continue'
+                  : (_isTransfer && _transferTo.text.trim().isEmpty)
+                      ? 'Enter the buyer name to continue'
+                      : 'Enter your contact info to continue',
+      1 => 'Upload all required documents to continue',
+      2 => 'Choose a payment method to continue',
+      _ => null,
+    };
+  }
+
+  /// Non-blocking format hint for the contact field (does not gate the step).
+  String? get _contactWarning => contactFormatWarning(
+        isTelegram: _contact == ContactWay.telegram,
+        value: _contactInfo.text,
+      );
+
   Future<void> _pickOnMap() async {
     final initial = _location ?? kCambodiaCenter;
     final picked = await context.push<LatLng>('/pick-location', extra: initial);
@@ -91,7 +116,8 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
     }
     setState(() => _step--);
     _page.animateToPage(_step,
-        duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic);
   }
 
   void _submit() {
@@ -127,7 +153,7 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              _WizardHeader(
+              WizardHeader(
                 title: widget.type.label,
                 step: _step,
                 total: _total,
@@ -144,11 +170,12 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
                   ],
                 ),
               ),
-              _BottomBar(
+              WizardBottomBar(
                 showBack: _step > 0,
                 onBack: _back,
                 label: lastStep ? 'Pay ${usd(widget.type.fee)}' : 'Continue',
                 enabled: _canContinue,
+                hint: _validationHint,
                 onNext: _next,
               ),
             ],
@@ -169,14 +196,26 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
           subtitle: 'Tell us about the title and who is applying.',
         ),
         const SizedBox(height: 20),
-        const FieldLabel('Title type'),
+        const _SubHeader('Property'),
+        const SizedBox(height: 12),
+        const FieldLabel('Title type', required: true),
         ChoiceChipsRow(
           options: kTitleTypes,
           selected: _titleType,
           onSelect: (t) => setState(() => _titleType = t),
         ),
+        const SizedBox(height: 8),
+        const Text(
+          'Hard: fully registered · Soft: provisional (commune-level) · '
+          'LMAP: systematic-registration title.',
+          style: TextStyle(
+            fontSize: 11.5,
+            color: AppColors.textSecondary,
+            height: 1.4,
+          ),
+        ),
         const SizedBox(height: 18),
-        const FieldLabel('Location'),
+        const FieldLabel('Location', required: true),
         InputField(
           controller: _address,
           hint: 'e.g. No. 12, Street 310, Sangkat …, City / Province',
@@ -185,8 +224,13 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         ),
         const SizedBox(height: 10),
         MapPickField(location: _location, onPick: _pickOnMap),
-        const SizedBox(height: 18),
-        FieldLabel(_isTransfer ? 'Current owner (seller)' : 'Applicant full name'),
+        const SizedBox(height: 22),
+        const _SubHeader('Applicant & contact'),
+        const SizedBox(height: 12),
+        FieldLabel(
+          _isTransfer ? 'Current owner (seller)' : 'Applicant full name',
+          required: true,
+        ),
         InputField(
           controller: _applicant,
           hint: 'e.g. Chan Rithy',
@@ -194,7 +238,7 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         ),
         if (_isTransfer) ...[
           const SizedBox(height: 18),
-          const FieldLabel('Transfer to (buyer)'),
+          const FieldLabel('Transfer to (buyer)', required: true),
           InputField(
             controller: _transferTo,
             hint: 'e.g. Sok Dara',
@@ -206,20 +250,24 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         ChoiceChipsRow(
           options: const ['Telegram', 'Phone'],
           selected: _contact == ContactWay.telegram ? 'Telegram' : 'Phone',
-          onSelect: (v) => setState(() => _contact =
-              v == 'Telegram' ? ContactWay.telegram : ContactWay.phone),
+          onSelect: (v) {
+            final next =
+                v == 'Telegram' ? ContactWay.telegram : ContactWay.phone;
+            if (next != _contact) _contactInfo.clear();
+            setState(() => _contact = next);
+          },
         ),
         const SizedBox(height: 14),
         InputField(
           controller: _contactInfo,
-          hint: _contact == ContactWay.telegram
-              ? '@username'
-              : '+855 12 345 678',
+          hint:
+              _contact == ContactWay.telegram ? '@username' : '+855 12 345 678',
           keyboardType: _contact == ContactWay.phone
               ? TextInputType.phone
               : TextInputType.text,
           onChanged: (_) => setState(() {}),
         ),
+        if (_contactWarning != null) InlineHint(_contactWarning!),
       ]);
 
   Widget _stepDocuments() {
@@ -289,7 +337,7 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            boxShadow: AppColors.cardShadow,
           ),
           child: Column(
             children: [
@@ -297,7 +345,8 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
               _row('Title type', _titleType ?? '—'),
               _row('Location', _address.text.trim()),
               if (_location != null) _row('Pinned', formatLatLng(_location!)),
-              _row(_isTransfer ? 'Seller' : 'Applicant', _applicant.text.trim()),
+              _row(
+                  _isTransfer ? 'Seller' : 'Applicant', _applicant.text.trim()),
               if (_isTransfer) _row('Buyer', _transferTo.text.trim()),
               _row('Documents', '${_uploaded.length} attached'),
               _row('Contact', _contactInfo.text.trim(), last: true),
@@ -308,8 +357,9 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            boxShadow: AppColors.cardShadow,
           ),
           child: Row(
             children: [
@@ -379,142 +429,21 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
   }
 }
 
-// ── Header & bottom bar ──────────────────────────────────────────────────
+/// Small uppercase section label used to group fields within a wizard step.
+class _SubHeader extends StatelessWidget {
+  const _SubHeader(this.text);
 
-class _WizardHeader extends StatelessWidget {
-  const _WizardHeader({
-    required this.title,
-    required this.step,
-    required this.total,
-    required this.onBack,
-  });
-
-  final String title;
-  final int step;
-  final int total;
-  final VoidCallback onBack;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              GlassIconButton(
-                asset: 'assets/icons/base/caretright.svg',
-                onTap: onBack,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              Text(
-                'Step ${step + 1}/$total',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              for (var i = 0; i < total; i++) ...[
-                Expanded(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: i <= step ? AppColors.gold : AppColors.iconTile,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-                if (i < total - 1) const SizedBox(width: 6),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomBar extends StatelessWidget {
-  const _BottomBar({
-    required this.showBack,
-    required this.onBack,
-    required this.label,
-    required this.enabled,
-    required this.onNext,
-  });
-
-  final bool showBack;
-  final VoidCallback onBack;
-  final String label;
-  final bool enabled;
-  final VoidCallback onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (showBack) ...[
-            GestureDetector(
-              onTap: onBack,
-              child: Container(
-                height: 48,
-                width: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: SvgPicture.asset(
-                    'assets/icons/base/caretright.svg',
-                    width: 18,
-                    height: 18,
-                    colorFilter:
-                        const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: PrimaryButton(
-              label: label,
-              enabled: enabled,
-              onPressed: enabled ? onNext : () {},
-            ),
-          ),
-        ],
+    return Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w800,
+        color: AppColors.textSecondary,
+        letterSpacing: 0.6,
       ),
     );
   }
@@ -543,7 +472,7 @@ class _SuccessView extends StatelessWidget {
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F973D).withValues(alpha: 0.12),
+                    color: AppColors.success.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -551,7 +480,7 @@ class _SuccessView extends StatelessWidget {
                       width: 64,
                       height: 64,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF0F973D),
+                        color: AppColors.success,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.check_rounded,

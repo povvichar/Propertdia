@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/social_auth.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -36,9 +37,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/onboarding'),
                     icon: SvgPicture.asset(
-                      'assets/icons/base/caretright.svg',
+                      'assets/icons/base/careleft.svg',
                       width: 22,
                       height: 22,
                       colorFilter: const ColorFilter.mode(
@@ -104,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Continue
                     PrimaryButton(
                       label: 'Continue',
-                      onPressed: () {},
+                      onPressed: () => context.go('/home'),
                       enabled: _hasInput,
                     ),
 
@@ -116,27 +119,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 24),
 
                     // Google
-                    _SocialButton(
-                      onTap: () {},
-                      logo:
-                          SvgPicture.string(_kGoogleSvg, width: 20, height: 20),
-                      label: 'Continue with Google',
-                      background: Colors.white,
-                      foreground: AppColors.textPrimary,
-                      borderColor: const Color(0xFFE3E6EE),
-                    ),
+                    googleButton(onTap: () => context.go('/home')),
                     const SizedBox(height: 12),
 
                     // Facebook
-                    _SocialButton(
-                      onTap: () {},
-                      logo: SvgPicture.string(_kFacebookSvg,
-                          width: 20, height: 20),
-                      label: 'Continue with Facebook',
-                      background: const Color(0xFF1877F2),
-                      foreground: Colors.white,
-                      borderColor: Colors.transparent,
-                    ),
+                    facebookButton(onTap: () => context.go('/home')),
 
                     const SizedBox(height: 36),
 
@@ -177,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Log in
                     Center(
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () => context.go('/login'),
                         child: const Text.rich(
                           TextSpan(
                             style: TextStyle(fontSize: 13.5),
@@ -212,20 +199,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
 // ── Phone field ──────────────────────────────────────────────────────────────
 
-class _PhoneField extends StatelessWidget {
+class _PhoneField extends StatefulWidget {
   const _PhoneField({required this.controller, required this.onChanged});
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
   @override
+  State<_PhoneField> createState() => _PhoneFieldState();
+}
+
+class _PhoneFieldState extends State<_PhoneField> {
+  final _focus = FocusNode();
+  bool _active = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() => setState(() => _active = _focus.hasFocus));
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
       height: 56,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: _active ? Colors.white : AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE3E6EE), width: 1),
+        border: Border.all(
+          color: _active ? AppColors.gold : AppColors.border,
+          width: _active ? 1.5 : 1,
+        ),
+        boxShadow: _active
+            ? [
+                BoxShadow(
+                  color: AppColors.gold.withValues(alpha: 0.12),
+                  blurRadius: 0,
+                  spreadRadius: 3,
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [
@@ -267,24 +288,35 @@ class _PhoneField extends StatelessWidget {
               ],
             ),
           ),
-          Container(width: 1, height: 28, color: const Color(0xFFE3E6EE)),
+          Container(
+            width: 1,
+            height: 28,
+            color: _active ? AppColors.gold.withValues(alpha: 0.4) : AppColors.border,
+          ),
           Expanded(
             child: TextField(
-              controller: controller,
-              onChanged: onChanged,
+              controller: widget.controller,
+              focusNode: _focus,
+              onChanged: widget.onChanged,
               keyboardType: TextInputType.phone,
+              cursorColor: AppColors.gold,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
+                filled: false,
                 hintText: '012 345 678',
-                hintStyle:
-                    TextStyle(color: AppColors.textSecondary, fontSize: 15),
+                hintStyle: TextStyle(
+                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  fontSize: 15,
+                ),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 14),
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
               ),
             ),
           ),
@@ -294,8 +326,8 @@ class _PhoneField extends StatelessWidget {
               'assets/icons/base/smartphone.svg',
               width: 18,
               height: 18,
-              colorFilter: const ColorFilter.mode(
-                AppColors.textSecondary,
+              colorFilter: ColorFilter.mode(
+                _active ? AppColors.gold : AppColors.textSecondary,
                 BlendMode.srcIn,
               ),
             ),
@@ -315,7 +347,7 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Container(height: 1, color: const Color(0xFFE3E6EE))),
+        Expanded(child: Container(height: 1, color: AppColors.divider)),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 14),
           child: Text(
@@ -327,79 +359,9 @@ class _OrDivider extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(child: Container(height: 1, color: const Color(0xFFE3E6EE))),
+        Expanded(child: Container(height: 1, color: AppColors.divider)),
       ],
     );
   }
 }
 
-// ── Social button ────────────────────────────────────────────────────────────
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.onTap,
-    required this.logo,
-    required this.label,
-    required this.background,
-    required this.foreground,
-    required this.borderColor,
-  });
-
-  final VoidCallback onTap;
-  final Widget logo;
-  final String label;
-  final Color background;
-  final Color foreground;
-  final Color borderColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 54,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              logo,
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: foreground,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Inline brand SVGs ────────────────────────────────────────────────────────
-
-const _kGoogleSvg = '''
-<svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-  <path fill="#4285F4" d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/>
-  <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-</svg>
-''';
-
-const _kFacebookSvg = '''
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <path fill="white" d="M13.397 20.997v-8.196h2.765l.411-3.209h-3.176V7.548c0-.926.258-1.56 1.587-1.56h1.684V3.127A22.336 22.336 0 0014.201 3c-2.444 0-4.122 1.492-4.122 4.231v2.355H7.332v3.209h2.753v8.202h3.312z"/>
-</svg>
-''';

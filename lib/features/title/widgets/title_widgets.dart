@@ -124,7 +124,7 @@ class _Row extends StatelessWidget {
         : active
             ? AppColors.gold
             : reachedDone
-                ? const Color(0xFF0F973D)
+                ? AppColors.success
                 : AppColors.border;
 
     return IntrinsicHeight(
@@ -169,7 +169,7 @@ class _Row extends StatelessWidget {
                     width: 2,
                     margin: const EdgeInsets.symmetric(vertical: 2),
                     color:
-                        reachedDone ? const Color(0xFF0F973D) : AppColors.border,
+                        reachedDone ? AppColors.success : AppColors.border,
                   ),
                 ),
             ],
@@ -248,11 +248,11 @@ class DocUploadTile extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: uploaded
-              ? const Color(0xFF0F973D).withValues(alpha: 0.06)
+              ? AppColors.success.withValues(alpha: 0.06)
               : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: uploaded ? const Color(0xFF0F973D) : AppColors.border,
+            color: uploaded ? AppColors.success : AppColors.border,
             width: uploaded ? 1.4 : 1,
           ),
         ),
@@ -295,7 +295,7 @@ class DocUploadTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11.5,
                       color: uploaded
-                          ? const Color(0xFF0F973D)
+                          ? AppColors.success
                           : AppColors.textSecondary,
                       fontWeight: uploaded ? FontWeight.w600 : FontWeight.w400,
                     ),
@@ -306,7 +306,7 @@ class DocUploadTile extends StatelessWidget {
             const SizedBox(width: 10),
             uploaded
                 ? const Icon(Icons.check_circle_rounded,
-                    size: 24, color: Color(0xFF0F973D))
+                    size: 24, color: AppColors.success)
                 : SvgPicture.asset(
                     'assets/icons/base/folder_upload.svg',
                     width: 22,
@@ -355,7 +355,7 @@ class DocRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
             decoration: BoxDecoration(
-              color: (verified ? const Color(0xFF0F973D) : AppColors.gold)
+              color: (verified ? AppColors.success : AppColors.gold)
                   .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -364,7 +364,7 @@ class DocRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: verified ? const Color(0xFF0F973D) : AppColors.goldDark,
+                color: verified ? AppColors.success : AppColors.goldDark,
               ),
             ),
           ),

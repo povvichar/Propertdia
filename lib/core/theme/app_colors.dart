@@ -19,13 +19,17 @@ abstract class AppColors {
   // Text
   static const Color textPrimary = Color(0xFF15203B);
   static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textOnDark = Colors.white;
   static const Color textOnDarkMuted = Color(0xFFC7CEDC);
 
   // Misc
-  static const Color border = Color(0xFFE3E6EE);
+  static const Color border = Color(0xFFF2F2F2);
+  static const Color divider = Color(0xFFF0F1F6);
   static const Color overlayNavy = Color(0xCC1E2A47);
   static const Color danger = Color(0xFFE5484D);
+  static const Color success = Color(0xFF0F973D);
+  static const Color successSoft = Color(0xFFE7F6EC);
+  static const Color warning = Color(0xFFF3A218);
+  static const Color info = Color(0xFF0088FF);
 
   // Gradients
   static const Gradient goldShimmer = LinearGradient(
@@ -56,21 +60,4 @@ abstract class AppColors {
         ),
       ];
 
-  static List<BoxShadow> get cardShadowPressed => [
-        BoxShadow(
-          color: const Color(0xFF1E2A47).withValues(alpha: 0.03),
-          blurRadius: 4,
-          spreadRadius: 0,
-          offset: const Offset(0, 2),
-        ),
-      ];
-
-  static List<BoxShadow> get buttonGlow => [
-        BoxShadow(
-          color: gold.withValues(alpha: 0.35),
-          blurRadius: 12,
-          spreadRadius: 0,
-          offset: const Offset(0, 4),
-        ),
-      ];
 }

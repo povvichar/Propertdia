@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    
+
+    {
+      "name": "PROPERTDIA (iOS Simulator)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "deviceId": "9AAD2590-4FFF-45F9-BB77-B09484990C38"
+    },
+    {
+      "name": "PROPERTDIA (My iPhone)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "deviceId": "00008120-000431841458201E",
+      "toolArgs": ["--device-timeout", "30"]
+    },
+    {
+      "name": "PROPERTDIA (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "deviceId": "chrome"
+    }
+  ]
+}

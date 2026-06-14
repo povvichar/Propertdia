@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -156,7 +158,7 @@ class _MapPriceScreenState extends State<MapPriceScreen> {
                     Row(
                       children: [
                         GlassCircleButton(
-                          asset: 'assets/icons/base/caretright.svg',
+                          asset: 'assets/icons/base/careleft.svg',
                           onTap: () => context.pop(),
                         ),
                         const SizedBox(width: 12),
@@ -252,7 +254,7 @@ class _UserDot extends StatelessWidget {
         width: 26,
         height: 26,
         decoration: BoxDecoration(
-          color: const Color(0xFF0088FF).withValues(alpha: 0.18),
+          color: AppColors.info.withValues(alpha: 0.18),
           shape: BoxShape.circle,
         ),
         child: Center(
@@ -260,12 +262,12 @@ class _UserDot extends StatelessWidget {
             width: 14,
             height: 14,
             decoration: BoxDecoration(
-              color: const Color(0xFF0088FF),
+              color: AppColors.info,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2.5),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0088FF).withValues(alpha: 0.5),
+                  color: AppColors.info.withValues(alpha: 0.5),
                   blurRadius: 8,
                 ),
               ],
@@ -277,45 +279,107 @@ class _UserDot extends StatelessWidget {
   }
 }
 
-class _SearchField extends StatelessWidget {
+class _SearchField extends StatefulWidget {
   const _SearchField();
 
   @override
+  State<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<_SearchField> {
+  final _focus = FocusNode();
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GlassSurface(
-      radius: 24,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: SizedBox(
-        height: 44,
-        child: Row(
-          children: [
-            SvgPicture.asset(
-              'assets/icons/base/search.svg',
-              width: 18,
-              height: 18,
-              colorFilter: const ColorFilter.mode(
-                  AppColors.textSecondary, BlendMode.srcIn),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _focused
+                  ? AppColors.gold
+                  : Colors.white.withValues(alpha: 0.7),
+              width: _focused ? 1.5 : 1.0,
             ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'Search area, district, coordinates',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  color: AppColors.textSecondary,
+            boxShadow: [
+              BoxShadow(
+                color: _focused
+                    ? AppColors.gold.withValues(alpha: 0.22)
+                    : AppColors.navy.withValues(alpha: 0.08),
+                blurRadius: _focused ? 14 : 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              SvgPicture.asset(
+                'assets/icons/base/search.svg',
+                width: 18,
+                height: 18,
+                colorFilter: ColorFilter.mode(
+                  _focused ? AppColors.gold : AppColors.textSecondary,
+                  BlendMode.srcIn,
                 ),
               ),
-            ),
-            SvgPicture.asset(
-              'assets/icons/base/slidershorizontal.svg',
-              width: 18,
-              height: 18,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  focusNode: _focus,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'Search area, district, coordinates',
+                    hintStyle: TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: Colors.transparent,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  contextMenuBuilder: (_, __) => const SizedBox.shrink(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SvgPicture.asset(
+                'assets/icons/base/slidershorizontal.svg',
+                width: 18,
+                height: 18,
+                colorFilter: ColorFilter.mode(
+                  _focused ? AppColors.gold : AppColors.navy,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

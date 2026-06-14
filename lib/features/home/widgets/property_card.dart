@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -21,6 +20,9 @@ class _PropertyCardState extends State<PropertyCard> {
 
   @override
   Widget build(BuildContext context) {
+    final p = widget.property;
+    final accent = p.isRent ? AppColors.info : AppColors.gold;
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
@@ -34,49 +36,55 @@ class _PropertyCardState extends State<PropertyCard> {
           width: widget.width,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: _pressed ? AppColors.cardShadowPressed : AppColors.cardShadow,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppColors.cardShadow,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Photo ──────────────────────────────────────────────────
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: SizedBox(
-                  height: 128,
+                  height: 120,
                   width: double.infinity,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
                       Image.network(
-                        widget.property.imageUrl,
+                        p.imageUrl,
                         fit: BoxFit.cover,
-                        loadingBuilder: (_, child, progress) => progress == null
-                            ? child
-                            : Container(color: AppColors.iconTile),
+                        loadingBuilder: (_, child, progress) =>
+                            progress == null
+                                ? child
+                                : Container(color: AppColors.iconTile),
                       ),
                       const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: AppColors.photoOverlay,
-                        ),
+                        decoration:
+                            BoxDecoration(gradient: AppColors.photoOverlay),
                       ),
+                      // Accent tag — colour encodes sale vs rent.
                       Positioned(
                         top: 8,
                         left: 8,
-                        child: _GlassTag(label: widget.property.tag),
+                        child: _AccentTag(label: p.tag, accent: accent),
                       ),
                     ],
                   ),
                 ),
               ),
+
+              // ── Info ───────────────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                padding: const EdgeInsets.fromLTRB(12, 9, 12, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Title
                     Text(
-                      widget.property.title,
+                      p.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -87,17 +95,21 @@ class _PropertyCardState extends State<PropertyCard> {
                       ),
                     ),
                     const SizedBox(height: 3),
+
+                    // Location
                     Row(
                       children: [
-                        const Icon(
-                          Icons.location_on_rounded,
-                          size: 10,
-                          color: AppColors.textSecondary,
+                        SvgPicture.asset(
+                          'assets/icons/base/map_point.svg',
+                          width: 11,
+                          height: 11,
+                          colorFilter: const ColorFilter.mode(
+                              AppColors.textSecondary, BlendMode.srcIn),
                         ),
-                        const SizedBox(width: 2),
+                        const SizedBox(width: 3),
                         Expanded(
                           child: Text(
-                            widget.property.location,
+                            p.location,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -108,15 +120,34 @@ class _PropertyCardState extends State<PropertyCard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 7),
-                    Text(
-                      widget.property.price,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                        letterSpacing: -0.3,
-                      ),
+                    const SizedBox(height: 8),
+
+                    // Price + specs
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          p.price,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (p.beds > 0) ...[
+                          _SpecChip(
+                            asset: 'assets/icons/base/bed.svg',
+                            value: '${p.beds}',
+                          ),
+                          const SizedBox(width: 8),
+                          _SpecChip(
+                            asset: 'assets/icons/base/bath.svg',
+                            value: '${p.baths}',
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -129,36 +160,61 @@ class _PropertyCardState extends State<PropertyCard> {
   }
 }
 
-class _GlassTag extends StatelessWidget {
-  const _GlassTag({required this.label});
+class _SpecChip extends StatelessWidget {
+  const _SpecChip({required this.asset, required this.value});
 
-  final String label;
+  final String asset;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.6),
-              width: 0.8,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset(
+          asset,
+          width: 13,
+          height: 13,
+          colorFilter: const ColorFilter.mode(
+              AppColors.textSecondary, BlendMode.srcIn),
+        ),
+        const SizedBox(width: 3),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
           ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.navy,
-              letterSpacing: 0.1,
-            ),
-          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Small filled accent pill on the photo — gold=sale, blue=rent.
+class _AccentTag extends StatelessWidget {
+  const _AccentTag({required this.label, required this.accent});
+
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final isGold = accent == AppColors.gold;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: isGold ? AppColors.navy : Colors.white,
+          letterSpacing: 0.1,
         ),
       ),
     );

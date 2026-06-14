@@ -106,7 +106,7 @@ class _TimelineRow extends StatelessWidget {
         : active
             ? AppColors.gold
             : done
-                ? const Color(0xFF0F973D)
+                ? AppColors.success
                 : AppColors.border;
 
     return IntrinsicHeight(
@@ -150,7 +150,7 @@ class _TimelineRow extends StatelessWidget {
                   child: Container(
                     width: 2,
                     margin: const EdgeInsets.symmetric(vertical: 2),
-                    color: done ? const Color(0xFF0F973D) : AppColors.border,
+                    color: done ? AppColors.success : AppColors.border,
                   ),
                 ),
             ],

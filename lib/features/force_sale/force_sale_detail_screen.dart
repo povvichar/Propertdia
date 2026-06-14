@@ -19,7 +19,7 @@ class ForceSaleDetailScreen extends StatefulWidget {
 }
 
 class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
-  bool _monitor = false;
+  int _selectedPhoto = 0;
 
   void _toast(String msg) {
     ScaffoldMessenger.of(context)
@@ -36,9 +36,9 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
     final p = widget.property;
     final topPad = MediaQuery.paddingOf(context).top;
     final heroH = 280.0 + topPad;
-    final urgent = p.daysLeft <= 5;
     final isLand = p.beds == 0 && p.baths == 0;
     final saving = p.marketPrice - p.askingPrice;
+    final photos = p.photos;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -53,7 +53,7 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
                   children: [
                     Positioned.fill(
                       child: Image.network(
-                        p.imageUrl,
+                        photos[_selectedPhoto],
                         fit: BoxFit.cover,
                         loadingBuilder: (_, child, prog) => prog == null
                             ? child
@@ -76,6 +76,51 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
                       ),
                     ),
                     Positioned(
+                      bottom: 38,
+                      left: 16,
+                      right: 16,
+                      child: SizedBox(
+                        height: 52,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: photos.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            final selected = index == _selectedPhoto;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => _selectedPhoto = index),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                width: 70,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(9),
+                                  border: Border.all(
+                                    color: selected
+                                        ? Colors.white
+                                        : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    photos[index],
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (_, child, progress) =>
+                                        progress == null
+                                            ? child
+                                            : Container(
+                                                color: AppColors.iconTile),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Positioned(
                       top: topPad + 12,
                       left: 16,
                       child: _GlassCircle(
@@ -93,12 +138,16 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
                           final saved = savedForceSale.contains(p.id);
                           return _GlassCircle(
                             onTap: () => savedForceSale.toggle(p.id),
-                            child: Icon(
+                            child: SvgPicture.asset(
                               saved
-                                  ? Icons.bookmark_rounded
-                                  : Icons.bookmark_border_rounded,
-                              size: 19,
-                              color: saved ? AppColors.gold : AppColors.navy,
+                                  ? 'assets/icons/base/heart_fill.svg'
+                                  : 'assets/icons/base/heart.svg',
+                              width: 20,
+                              height: 20,
+                              colorFilter: ColorFilter.mode(
+                                saved ? AppColors.gold : AppColors.navy,
+                                BlendMode.srcIn,
+                              ),
                             ),
                           );
                         },
@@ -120,13 +169,7 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            _Tag(color: p.saleType.color, label: p.saleType.label),
-                            const Spacer(),
-                            _DeadlinePill(days: p.daysLeft, urgent: urgent),
-                          ],
-                        ),
+                        _Tag(color: p.saleType.color, label: p.saleType.label),
                         const SizedBox(height: 12),
                         Text(
                           p.title,
@@ -190,18 +233,45 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 18),
-                        _ReasonCard(color: p.saleType.color, reason: p.reason),
-                        const SizedBox(height: 14),
-                        _MonitorCard(
-                          value: _monitor,
-                          onChanged: (v) {
-                            setState(() => _monitor = v);
-                            _toast(v
-                                ? 'Monitoring price & status updates'
-                                : 'Monitoring off');
-                          },
-                        ),
-                        const SizedBox(height: 14),
+                        if (p.features.isNotEmpty) ...[
+                          const Text(
+                            'Property Features',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          for (final feature in p.features)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '•  ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      feature,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 10),
+                        ],
                         _EmergencyContact(
                           agentName: p.agentName,
                           onCall: () => _toast('Calling emergency hotline…'),
@@ -291,37 +361,6 @@ class _Tag extends StatelessWidget {
   }
 }
 
-class _DeadlinePill extends StatelessWidget {
-  const _DeadlinePill({required this.days, required this.urgent});
-
-  final int days;
-  final bool urgent;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = urgent ? AppColors.danger : AppColors.navy;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-      decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.schedule_rounded, size: 15, color: c),
-          const SizedBox(width: 5),
-          Text(
-            '$days days left',
-            style: TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w700, color: c),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _PriceCard extends StatelessWidget {
   const _PriceCard({
     required this.asking,
@@ -380,8 +419,7 @@ class _PriceCard extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: AppColors.gold,
                   borderRadius: BorderRadius.circular(8),
@@ -462,101 +500,6 @@ class _SpecTile extends StatelessWidget {
   }
 }
 
-class _ReasonCard extends StatelessWidget {
-  const _ReasonCard({required this.color, required this.reason});
-
-  final Color color;
-  final String reason;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline_rounded, size: 18, color: color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Why it’s selling: $reason',
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MonitorCard extends StatelessWidget {
-  const _MonitorCard({required this.value, required this.onChanged});
-
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: const Icon(Icons.visibility_outlined,
-                size: 20, color: AppColors.navyIcon),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Monitor this opportunity',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Alert me on price drops & status changes',
-                  style:
-                      TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeTrackColor: AppColors.gold,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _EmergencyContact extends StatelessWidget {
   const _EmergencyContact({
     required this.agentName,
@@ -605,31 +548,33 @@ class _EmergencyContact extends StatelessWidget {
           const SizedBox(width: 10),
           GestureDetector(
             onTap: onCall,
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: const BoxDecoration(
-                color: AppColors.danger,
-                shape: BoxShape.circle,
-              ),
+            child: SizedBox(
+              width: 40,
+              height: 40,
               child: Center(
                 child: SvgPicture.asset(
                   'assets/icons/base/phone.svg',
-                  width: 18,
-                  height: 18,
+                  width: 24,
+                  height: 24,
                   colorFilter:
-                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                      const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 4),
           GestureDetector(
             onTap: onTelegram,
-            child: SvgPicture.asset(
-              'assets/icons/base/telegram.svg',
-              width: 42,
-              height: 42,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/base/telegram.svg',
+                  width: 24,
+                  height: 24,
+                ),
+              ),
             ),
           ),
         ],
@@ -681,7 +626,8 @@ class _BottomBar extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
-          Expanded(child: PrimaryButton(label: 'Make an offer', onPressed: onOffer)),
+          Expanded(
+              child: PrimaryButton(label: 'Make an offer', onPressed: onOffer)),
         ],
       ),
     );

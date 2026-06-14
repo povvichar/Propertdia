@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
+// Re-export shared formatters so screens importing this data file keep usd()/shortDate().
+export '../../../shared/utils/format.dart';
+
 enum ValuationType { land, building }
 
 enum ValuationStatus { requested, inReview, approved, rejected, completed }
@@ -47,11 +50,11 @@ extension ValuationStatusX on ValuationStatus {
       };
 
   Color get color => switch (this) {
-        ValuationStatus.requested => const Color(0xFF0088FF),
-        ValuationStatus.inReview => const Color(0xFFF3A218),
-        ValuationStatus.approved => const Color(0xFF0F973D),
+        ValuationStatus.requested => AppColors.info,
+        ValuationStatus.inReview => AppColors.warning,
+        ValuationStatus.approved => AppColors.success,
         ValuationStatus.rejected => AppColors.danger,
-        ValuationStatus.completed => const Color(0xFF0F973D),
+        ValuationStatus.completed => AppColors.success,
       };
 
   /// Index along the happy-path timeline (Requested → … → Completed).
@@ -118,24 +121,6 @@ class Valuation {
   bool get hasValue => estimatedValue != null &&
       (status == ValuationStatus.approved ||
           status == ValuationStatus.completed);
-}
-
-String usd(int v) {
-  final s = v.toString();
-  final b = StringBuffer(r'$');
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return b.toString();
-}
-
-String shortDate(DateTime d) {
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
 
 const kLandTitles = ['Hard Title', 'Soft Title', 'LMAP Title'];

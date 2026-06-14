@@ -21,8 +21,10 @@ const _services = [
       route: '/title'),
   _Service('assets/icons/home/force_sale.svg', 'Force Sale',
       route: '/force-sale'),
-  _Service('assets/icons/home/invest_loan.svg', 'Invest & Loan'),
-  _Service('assets/icons/home/partnership.svg', 'Partnership', multiColor: true),
+  _Service('assets/icons/home/invest_loan.svg', 'Invest & Loan',
+      route: '/invest'),
+  _Service('assets/icons/home/partnership.svg', 'Partnership',
+      multiColor: true, route: '/partnership'),
 ];
 
 class ServiceGrid extends StatelessWidget {
@@ -78,6 +80,7 @@ class _ServiceTileState extends State<_ServiceTile> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
+            boxShadow: AppColors.cardShadow,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

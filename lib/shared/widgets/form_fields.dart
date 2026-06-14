@@ -43,21 +43,70 @@ class StepHeader extends StatelessWidget {
 }
 
 class FieldLabel extends StatelessWidget {
-  const FieldLabel(this.text, {super.key});
+  const FieldLabel(this.text, {super.key, this.required = false});
+
+  final String text;
+
+  /// When true, appends a subtle gold asterisk marking the field as mandatory.
+  final bool required;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text.rich(
+        TextSpan(
+          text: text,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+          children: required
+              ? const [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.gold,
+                    ),
+                  ),
+                ]
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
+/// Small inline hint/warning shown below a field (non-blocking).
+class InlineHint extends StatelessWidget {
+  const InlineHint(this.text, {super.key});
 
   final String text;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              size: 14, color: AppColors.warning),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.warning,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,7 +6,7 @@ import '../../../shared/models/property.dart';
 
 /// Accent for a listing — gold for sale, blue for rent.
 Color listingAccent(Property p) =>
-    p.isRent ? const Color(0xFF0088FF) : AppColors.gold;
+    p.isRent ? AppColors.info : AppColors.gold;
 
 /// Floating card shown when a map property pin is tapped.
 /// Thumbnail, title, price, sale/rent tag, bed/bath/area, agent + contacts.
@@ -132,7 +132,7 @@ class PropertyInfoCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              const Divider(height: 1, thickness: 1, color: Color(0xFFF0F1F6)),
+              const Divider(height: 1, thickness: 1, color: AppColors.divider),
               const SizedBox(height: 12),
               // Agent + contacts
               Row(

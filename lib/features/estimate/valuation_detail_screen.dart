@@ -107,7 +107,7 @@ class _TopBar extends StatelessWidget {
     return Row(
       children: [
         GlassIconButton(
-          asset: 'assets/icons/base/caretright.svg',
+          asset: 'assets/icons/base/careleft.svg',
           onTap: () => context.pop(),
         ),
         const SizedBox(width: 14),
@@ -198,29 +198,52 @@ class _SummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFF0F1F6)),
+          const Divider(height: 1, thickness: 1, color: AppColors.divider),
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 12,
-            children: [
-              if (v.applicantName.isNotEmpty)
-                _Fact(label: 'Applicant', value: v.applicantName),
-              _Fact(
-                label: isLand ? 'Land size' : 'Building size',
-                value: '${isLand ? v.landSize : v.buildingSize} m²',
-              ),
-              if (!isLand && v.beds != null)
-                _Fact(label: 'Rooms', value: '${v.beds} bd · ${v.baths} ba'),
-              if (v.photoCount > 0)
-                _Fact(label: 'Photos', value: '${v.photoCount} attached'),
-              _Fact(label: 'Submitted', value: shortDate(v.submittedDate)),
-              _Fact(
-                label: 'Contact',
-                value:
-                    '${v.contactMethod == ContactMethod.telegram ? 'Telegram' : 'Phone'} · ${v.contactInfo}',
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final factWidth = (constraints.maxWidth - 10) / 2;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 12,
+                children: [
+                  _Fact(
+                      label: 'Purpose',
+                      value: v.purpose.label,
+                      width: factWidth),
+                  if (v.applicantName.isNotEmpty)
+                    _Fact(
+                        label: 'Applicant',
+                        value: v.applicantName,
+                        width: factWidth),
+                  _Fact(
+                    label: isLand ? 'Land size' : 'Building size',
+                    value: '${isLand ? v.landSize : v.buildingSize} m²',
+                    width: factWidth,
+                  ),
+                  if (!isLand && v.beds != null)
+                    _Fact(
+                        label: 'Rooms',
+                        value: '${v.beds} bd · ${v.baths} ba',
+                        width: factWidth),
+                  if (v.photoCount > 0)
+                    _Fact(
+                        label: 'Photos',
+                        value: '${v.photoCount} attached',
+                        width: factWidth),
+                  _Fact(
+                      label: 'Submitted',
+                      value: shortDate(v.submittedDate),
+                      width: factWidth),
+                  _Fact(
+                    label: 'Contact',
+                    value:
+                        '${v.contactMethod == ContactMethod.telegram ? 'Telegram' : 'Phone'} · ${v.contactInfo}',
+                    width: factWidth,
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -229,15 +252,16 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _Fact extends StatelessWidget {
-  const _Fact({required this.label, required this.value});
+  const _Fact({required this.label, required this.value, required this.width});
 
   final String label;
   final String value;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: (MediaQuery.sizeOf(context).width - 32 - 32 - 10) / 2,
+      width: width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

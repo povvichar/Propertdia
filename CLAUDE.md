@@ -32,7 +32,7 @@ lib/
   routes/app_router.dart     # GoRouter — splash → onboarding → home → register
   core/theme/
     app_colors.dart          # All brand tokens (colors, gradients, shadow presets)
-    app_text_styles.dart     # Inter-based semantic scale (display/title/body/label/price)
+    app_text_styles.dart     # Manrope-based semantic scale (display/title/body/label/price)
     app_theme.dart           # MaterialTheme wired to GoogleFonts.interTextTheme
   features/
     onboarding/              # splash_screen, onboarding_screen, language_screen
@@ -54,7 +54,7 @@ lib/
 - **State**: Riverpod (`flutter_riverpod`). Only `homeTabProvider` exists today — a `StateProvider<int>` for the bottom nav tab index.
 - **Navigation**: GoRouter. All routes are top-level in `app_router.dart`; no nested routing yet.
 - **Theme**: Always use `AppColors` and `AppTextStyles` constants. Never hardcode colors or raw `TextStyle` inline if a semantic token exists.
-- **Fonts**: Inter via `google_fonts`. Applied globally through `AppTheme.light`; use `GoogleFonts.inter(...)` for overrides.
+- **Fonts**: Manrope via `google_fonts`. Applied globally through `AppTheme.light` (`GoogleFonts.manropeTextTheme`); use `GoogleFonts.manrope(...)` for overrides.
 - **Assets**: SVG icons via `flutter_svg` (`SvgPicture.asset`). Icons live in `assets/icons/base/` (shared) and `assets/icons/home/` (home grid). Images in `assets/images/`.
 - **Bottom nav**: `_GlassNav` in `home_screen.dart` — liquid-glass pill, must not be modified unless explicitly requested.
 - **Press animations**: Use `AnimatedScale` + `GestureDetector` pattern (see `_ServiceTile`, `_PropertyCardState`). Scale down on press (0.93–0.97×), restore on release/cancel.

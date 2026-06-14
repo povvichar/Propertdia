@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
+// Re-export shared formatters so screens importing this data file keep usd()/shortDate().
+export '../../../shared/utils/format.dart';
+
 enum TitleServiceType { verification, transfer, ownership }
 
 enum TitleStatus { requested, inReview, approved, rejected, completed }
@@ -79,11 +82,11 @@ extension TitleStatusX on TitleStatus {
       };
 
   Color get color => switch (this) {
-        TitleStatus.requested => const Color(0xFF0088FF),
-        TitleStatus.inReview => const Color(0xFFF3A218),
-        TitleStatus.approved => const Color(0xFF0F973D),
+        TitleStatus.requested => AppColors.info,
+        TitleStatus.inReview => AppColors.warning,
+        TitleStatus.approved => AppColors.success,
         TitleStatus.rejected => AppColors.danger,
-        TitleStatus.completed => const Color(0xFF0F973D),
+        TitleStatus.completed => AppColors.success,
       };
 
   int get step => switch (this) {
@@ -125,24 +128,6 @@ class TitleApplication {
   final DateTime submittedDate;
   final List<String> documents;
   final String? transferTo;
-}
-
-String usd(int v) {
-  final s = v.toString();
-  final b = StringBuffer(r'$');
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return b.toString();
-}
-
-String shortDate(DateTime d) {
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
 
 /// Adds [days] to [from] skipping weekends (approx. working days).
