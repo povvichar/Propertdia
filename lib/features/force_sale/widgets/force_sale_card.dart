@@ -23,7 +23,6 @@ class ForceSaleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = property;
-    final urgent = p.daysLeft <= 5;
     final isLand = p.beds == 0 && p.baths == 0;
 
     return GestureDetector(
@@ -38,7 +37,8 @@ class ForceSaleCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
               child: SizedBox(
                 height: 168,
                 width: double.infinity,
@@ -93,15 +93,6 @@ class ForceSaleCard extends StatelessWidget {
                             letterSpacing: -0.2,
                           ),
                         ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 10,
-                      right: 10,
-                      child: _GlassPill(
-                        icon: Icons.schedule_rounded,
-                        label: '${p.daysLeft} days left',
-                        tint: urgent ? AppColors.danger : AppColors.navy,
                       ),
                     ),
                   ],
@@ -173,24 +164,16 @@ class ForceSaleCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    p.reason,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: p.saleType.color,
-                    ),
-                  ),
                   const SizedBox(height: 10),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF0F1F6)),
+                  const Divider(
+                      height: 1, thickness: 1, color: AppColors.divider),
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       if (!isLand) ...[
-                        _Spec(asset: 'assets/icons/base/bed.svg', value: '${p.beds}'),
+                        _Spec(
+                            asset: 'assets/icons/base/bed.svg',
+                            value: '${p.beds}'),
                         const SizedBox(width: 16),
                         _Spec(
                             asset: 'assets/icons/base/bath.svg',
@@ -239,7 +222,8 @@ class _GlassTag extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 0.8),
+            border: Border.all(
+                color: Colors.white.withValues(alpha: 0.6), width: 0.8),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -256,47 +240,6 @@ class _GlassTag extends StatelessWidget {
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassPill extends StatelessWidget {
-  const _GlassPill({required this.icon, required this.label, required this.tint});
-
-  final IconData icon;
-  final String label;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 0.8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 13, color: tint),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: tint,
                 ),
               ),
             ],
@@ -326,12 +269,21 @@ class _SaveButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.6),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 1),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.7), width: 1),
             ),
-            child: Icon(
-              saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-              size: 19,
-              color: saved ? AppColors.gold : AppColors.navy,
+            child: Center(
+              child: SvgPicture.asset(
+                saved
+                    ? 'assets/icons/base/heart_fill.svg'
+                    : 'assets/icons/base/heart.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(
+                  saved ? AppColors.gold : AppColors.navy,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
           ),
         ),

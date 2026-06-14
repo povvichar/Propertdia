@@ -29,19 +29,9 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
       .toList();
 
   Future<void> _openFilters() async {
-    final result = await showForceSaleFilter(context,
-        current: _adv, all: mockForceSale);
+    final result =
+        await showForceSaleFilter(context, current: _adv, all: mockForceSale);
     if (result != null) setState(() => _adv = result);
-  }
-
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.navy,
-        content: Text(msg),
-      ));
   }
 
   @override
@@ -71,9 +61,6 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
                                 setState(() => _savedOnly = !_savedOnly),
                           ),
                           const SizedBox(height: 16),
-                          _EmergencyCard(onContact: () =>
-                              _toast('Connecting to 24/7 distressed-sale hotline…')),
-                          const SizedBox(height: 16),
                           _SearchFilterRow(
                             activeCount: _adv.activeCount,
                             onFilters: _openFilters,
@@ -83,7 +70,7 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
                             selected: _quickType,
                             onSelect: (t) => setState(() => _quickType = t),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           Text(
                             _savedOnly
                                 ? '${list.length} saved'
@@ -94,7 +81,7 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
@@ -112,8 +99,8 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
                           property: list[i],
                           saved: savedForceSale.contains(list[i].id),
                           onSave: () => savedForceSale.toggle(list[i].id),
-                          onTap: () =>
-                              context.push('/force-sale/detail', extra: list[i]),
+                          onTap: () => context.push('/force-sale/detail',
+                              extra: list[i]),
                         ),
                       ),
                     ),
@@ -143,7 +130,7 @@ class _TopBar extends StatelessWidget {
     return Row(
       children: [
         GlassIconButton(
-          asset: 'assets/icons/base/caretright.svg',
+          asset: 'assets/icons/base/careleft.svg',
           onTap: () => context.pop(),
         ),
         const SizedBox(width: 14),
@@ -170,12 +157,16 @@ class _TopBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
+                SvgPicture.asset(
                   savedOnly
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded,
-                  size: 18,
-                  color: savedOnly ? AppColors.gold : AppColors.navy,
+                      ? 'assets/icons/base/heart_fill.svg'
+                      : 'assets/icons/base/heart.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(
+                    savedOnly ? AppColors.gold : AppColors.navy,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -191,89 +182,6 @@ class _TopBar extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _EmergencyCard extends StatelessWidget {
-  const _EmergencyCard({required this.onContact});
-
-  final VoidCallback onContact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.danger.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.danger.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.danger.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: SvgPicture.asset(
-              'assets/icons/base/alert.svg',
-              width: 22,
-              height: 22,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.danger, BlendMode.srcIn),
-              fit: BoxFit.none,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Emergency support',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  '24/7 hotline for time-sensitive deals',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: onContact,
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: const BoxDecoration(
-                color: AppColors.danger,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: SvgPicture.asset(
-                  'assets/icons/base/phone.svg',
-                  width: 18,
-                  height: 18,
-                  colorFilter:
-                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -401,7 +309,6 @@ class _TypeChips extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSel ? AppColors.navy : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: AppColors.cardShadow,
               ),
               child: Text(
                 label,

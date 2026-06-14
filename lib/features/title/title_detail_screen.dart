@@ -53,7 +53,7 @@ class _TitleDetailScreenState extends State<TitleDetailScreen> {
               Row(
                 children: [
                   GlassIconButton(
-                    asset: 'assets/icons/base/caretright.svg',
+                    asset: 'assets/icons/base/careleft.svg',
                     onTap: () => context.pop(),
                   ),
                   const SizedBox(width: 14),
@@ -204,7 +204,7 @@ class _SummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFF0F1F6)),
+          const Divider(height: 1, thickness: 1, color: AppColors.divider),
           const SizedBox(height: 14),
           Wrap(
             spacing: 10,

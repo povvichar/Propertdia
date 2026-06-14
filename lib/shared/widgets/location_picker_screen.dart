@@ -77,7 +77,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               child: Row(
                 children: [
                   GlassIconButton(
-                    asset: 'assets/icons/base/caretright.svg',
+                    asset: 'assets/icons/base/careleft.svg',
                     onTap: () => context.pop(),
                   ),
                   const SizedBox(width: 12),

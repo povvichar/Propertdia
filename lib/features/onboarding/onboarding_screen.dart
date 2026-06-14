@@ -77,7 +77,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   void _next() {
     if (_page == _pages.length - 1) {
-      context.go('/home');
+      context.go('/register');
     } else {
       _controller.nextPage(
         duration: const Duration(milliseconds: 320),
@@ -124,8 +124,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       _LangPicker(
                         selected: selected,
                         isOpen: _langOpen,
-                        onToggle: () =>
-                            setState(() => _langOpen = !_langOpen),
+                        onToggle: () => setState(() => _langOpen = !_langOpen),
                         onSelect: (lang) {
                           ref.read(languageProvider.notifier).state = lang;
                           setState(() => _langOpen = false);
@@ -147,7 +146,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   const Spacer(),
                   _PageDots(count: _pages.length, active: _page),
                   const SizedBox(height: 24),
-                  PrimaryButton(label: 'Continue', onPressed: _next),
+                  PrimaryButton(
+                    label:
+                        _page == _pages.length - 1 ? 'Get Started' : 'Continue',
+                    onPressed: _next,
+                  ),
                   const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -157,7 +160,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         style: TextStyle(color: Colors.white, fontSize: 13.5),
                       ),
                       GestureDetector(
-                        onTap: () => context.go('/home'),
+                        onTap: () => context.go('/login'),
                         child: const MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: Text(
@@ -239,8 +242,7 @@ class _LangPickerState extends State<_LangPicker>
 
   @override
   Widget build(BuildContext context) {
-    final current =
-        _langOptions.firstWhere((o) => o.lang == widget.selected);
+    final current = _langOptions.firstWhere((o) => o.lang == widget.selected);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,9 +413,8 @@ class _DropdownItemState extends State<_DropdownItem> {
                 widget.option.label,
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: widget.isSelected
-                      ? FontWeight.w700
-                      : FontWeight.w500,
+                  fontWeight:
+                      widget.isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: Colors.white,
                   letterSpacing: -0.1,
                 ),

@@ -30,7 +30,7 @@ class TitleScreen extends StatelessWidget {
                       Row(
                         children: [
                           GlassIconButton(
-                            asset: 'assets/icons/base/caretright.svg',
+                            asset: 'assets/icons/base/careleft.svg',
                             onTap: () => context.pop(),
                           ),
                           const SizedBox(width: 14),
@@ -82,15 +82,24 @@ class TitleScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SliverList.separated(
-                itemCount: mockTitleApplications.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16,
-                      i == mockTitleApplications.length - 1 ? 32 : 0),
-                  child: _ApplicationCard(app: mockTitleApplications[i]),
+              if (mockTitleApplications.isEmpty)
+                const SliverToBoxAdapter(
+                  child: _EmptyHub(
+                    icon: 'assets/icons/base/locked.svg',
+                    message:
+                        'No applications yet.\nStart a service above to get going.',
+                  ),
+                )
+              else
+                SliverList.separated(
+                  itemCount: mockTitleApplications.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) => Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16,
+                        i == mockTitleApplications.length - 1 ? 32 : 0),
+                    child: _ApplicationCard(app: mockTitleApplications[i]),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -252,7 +261,7 @@ class _ServiceCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             SvgPicture.asset(
-              'assets/icons/base/caretright.svg',
+              'assets/icons/base/careright.svg',
               width: 18,
               height: 18,
               colorFilter:
@@ -359,6 +368,53 @@ class _SectionTitle extends StatelessWidget {
         fontWeight: FontWeight.w800,
         color: AppColors.textPrimary,
         letterSpacing: -0.3,
+      ),
+    );
+  }
+}
+
+/// Placeholder shown when a hub list has no items yet.
+class _EmptyHub extends StatelessWidget {
+  const _EmptyHub({required this.icon, required this.message});
+
+  final String icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: SvgPicture.asset(
+                icon,
+                width: 26,
+                height: 26,
+                colorFilter: ColorFilter.mode(
+                    AppColors.textSecondary.withValues(alpha: 0.6),
+                    BlendMode.srcIn),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13.5,
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+        ],
       ),
     );
   }

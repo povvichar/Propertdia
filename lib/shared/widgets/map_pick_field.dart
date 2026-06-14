@@ -51,7 +51,7 @@ class MapPickField extends StatelessWidget {
                 ),
               ),
               SvgPicture.asset(
-                'assets/icons/base/caretright.svg',
+                'assets/icons/base/careright.svg',
                 width: 18,
                 height: 18,
                 colorFilter: const ColorFilter.mode(

@@ -3,11 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/models/property.dart';
 import '../../shared/providers/app_providers.dart';
+import '../favorites/favorites_view.dart';
+import '../media/media_view.dart';
+import '../profile/profile_view.dart';
 import 'widgets/home_header.dart';
 import 'widgets/property_card.dart';
 import 'widgets/service_grid.dart';
@@ -22,16 +24,18 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       extendBody: true,
-      body: const _HomeBody(),
+      body: IndexedStack(
+        index: tab,
+        children: const [
+          _HomeBody(),
+          FavoritesView(),
+          MediaView(),
+          ProfileView(),
+        ],
+      ),
       bottomNavigationBar: _GlassNav(
         current: tab,
-        onChanged: (i) {
-          if (i == 3) {
-            context.push('/register');
-          } else {
-            ref.read(homeTabProvider.notifier).state = i;
-          }
-        },
+        onChanged: (i) => ref.read(homeTabProvider.notifier).state = i,
       ),
     );
   }
@@ -159,13 +163,10 @@ class _GlassNav extends StatelessWidget {
               children: [
                 for (var i = 0; i < _navItems.length; i++)
                   Expanded(
-                    child: InkWell(
+                    child: _GlassNavItem(
+                      item: _navItems[i],
+                      active: i == current,
                       onTap: () => onChanged(i),
-                      borderRadius: BorderRadius.circular(38),
-                      child: _GlassNavItem(
-                        item: _navItems[i],
-                        active: i == current,
-                      ),
                     ),
                   ),
               ],
@@ -178,54 +179,59 @@ class _GlassNav extends StatelessWidget {
 }
 
 class _GlassNavItem extends StatelessWidget {
-  const _GlassNavItem({required this.item, required this.active});
+  const _GlassNavItem({
+    required this.item,
+    required this.active,
+    required this.onTap,
+  });
 
   final _NavItem item;
   final bool active;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
-          width: 44,
-          height: 30,
+          padding: EdgeInsets.symmetric(
+            horizontal: active ? 22 : 16,
+            vertical: active ? 10 : 0,
+          ),
           decoration: BoxDecoration(
-            color: active
-                ? AppColors.navy.withValues(alpha: 0.12)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(15),
+            color: active ? AppColors.navy.withValues(alpha: 0.10) : Colors.transparent,
+            borderRadius: BorderRadius.circular(24),
           ),
-          alignment: Alignment.center,
-          child: AnimatedScale(
-            scale: active ? 1.1 : 1.0,
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutBack,
-            child: SvgPicture.asset(
-              item.asset,
-              width: 22,
-              height: 22,
-              colorFilter: ColorFilter.mode(
-                active ? AppColors.navy : AppColors.textSecondary,
-                BlendMode.srcIn,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                item.asset,
+                width: 22,
+                height: 22,
+                colorFilter: ColorFilter.mode(
+                  active ? AppColors.navy : AppColors.textSecondary,
+                  BlendMode.srcIn,
+                ),
               ),
-            ),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 220),
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                  color: active ? AppColors.navy : AppColors.textSecondary,
+                  letterSpacing: active ? -0.1 : 0,
+                ),
+                child: Text(item.label),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 200),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: active ? AppColors.navy : AppColors.textSecondary,
-          ),
-          child: Text(item.label),
-        ),
-      ],
+      ),
     );
   }
 }

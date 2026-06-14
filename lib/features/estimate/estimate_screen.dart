@@ -72,15 +72,24 @@ class EstimateScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SliverList.separated(
-                itemCount: mockValuations.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => Padding(
-                  padding: EdgeInsets.fromLTRB(
-                      16, 0, 16, i == mockValuations.length - 1 ? 32 : 0),
-                  child: _ValuationCard(valuation: mockValuations[i]),
+              if (mockValuations.isEmpty)
+                const SliverToBoxAdapter(
+                  child: _EmptyHub(
+                    icon: 'assets/icons/base/scale.svg',
+                    message:
+                        'No valuations yet.\nRequest one above to get started.',
+                  ),
+                )
+              else
+                SliverList.separated(
+                  itemCount: mockValuations.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) => Padding(
+                    padding: EdgeInsets.fromLTRB(
+                        16, 0, 16, i == mockValuations.length - 1 ? 32 : 0),
+                    child: _ValuationCard(valuation: mockValuations[i]),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -97,7 +106,7 @@ class _TopBar extends StatelessWidget {
     return Row(
       children: [
         GlassIconButton(
-          asset: 'assets/icons/base/caretright.svg',
+          asset: 'assets/icons/base/careleft.svg',
           onTap: () => context.pop(),
         ),
         const SizedBox(width: 14),
@@ -349,7 +358,7 @@ class _ValuationCard extends StatelessWidget {
             ),
             if (v.hasValue) ...[
               const SizedBox(height: 12),
-              const Divider(height: 1, thickness: 1, color: Color(0xFFF0F1F6)),
+              const Divider(height: 1, thickness: 1, color: AppColors.divider),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -394,6 +403,53 @@ class _SectionTitle extends StatelessWidget {
         fontWeight: FontWeight.w800,
         color: AppColors.textPrimary,
         letterSpacing: -0.3,
+      ),
+    );
+  }
+}
+
+/// Placeholder shown when a hub list has no items yet.
+class _EmptyHub extends StatelessWidget {
+  const _EmptyHub({required this.icon, required this.message});
+
+  final String icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: SvgPicture.asset(
+                icon,
+                width: 26,
+                height: 26,
+                colorFilter: ColorFilter.mode(
+                    AppColors.textSecondary.withValues(alpha: 0.6),
+                    BlendMode.srcIn),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13.5,
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -164,46 +164,6 @@ const mockBestPrice = [
   ),
 ];
 
-const mockRecommended = [
-  Property(
-    id: 'p4',
-    title: 'Garden Link House',
-    location: 'Chroy Changvar, Phnom Penh',
-    price: '\$138,000',
-    imageUrl:
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900&q=80',
-    beds: 3,
-    baths: 3,
-    areaSqm: 180,
-    propertyType: 'Link House',
-  ),
-  Property(
-    id: 'p5',
-    title: 'BKK1 Serviced Apartment',
-    location: 'BKK1, Phnom Penh',
-    price: '\$1,250/mo',
-    imageUrl:
-        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80',
-    beds: 2,
-    baths: 2,
-    areaSqm: 110,
-    tag: 'For Rent',
-    propertyType: 'Apartment',
-  ),
-  Property(
-    id: 'p6',
-    title: 'Commercial Land Plot',
-    location: 'National Road 6, Siem Reap',
-    price: '\$95/sqm',
-    imageUrl:
-        'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=900&q=80',
-    beds: 0,
-    baths: 0,
-    areaSqm: 1200,
-    propertyType: 'Land',
-  ),
-];
-
 /// Phnom Penh listings positioned on the Map Price interactive map.
 const mockMapProperties = <Property>[
   Property(

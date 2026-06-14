@@ -67,12 +67,16 @@ class BankTile extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.gold.withValues(alpha: 0.08) : Colors.white,
+          color:
+              selected ? AppColors.gold.withValues(alpha: 0.08) : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? AppColors.gold : AppColors.border,
-            width: selected ? 1.5 : 1,
-          ),
+          boxShadow: AppColors.cardShadow,
+          border: selected
+              ? Border.all(
+                  color: AppColors.gold,
+                  width: 1.5,
+                )
+              : null,
         ),
         child: Row(
           children: [
@@ -127,7 +131,8 @@ class BankTile extends StatelessWidget {
                 ),
               ),
               child: selected
-                  ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                  ? const Icon(Icons.check_rounded,
+                      size: 14, color: Colors.white)
                   : null,
             ),
           ],

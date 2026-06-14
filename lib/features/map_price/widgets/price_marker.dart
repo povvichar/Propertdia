@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// A price pill pinned to a map coordinate. Pops up and turns navy when
-/// selected; otherwise a clean white pill with an accent dot.
+/// A price pill pinned to a map coordinate.
+///
+/// Colour encodes listing type at a glance:
+///   gold pill  + navy text  → For Sale
+///   blue pill  + white text → For Rent
+///   navy pill  + white text → selected (either type)
 class PriceMarker extends StatelessWidget {
   const PriceMarker({
     super.key,
@@ -14,12 +18,32 @@ class PriceMarker extends StatelessWidget {
   });
 
   final String label;
+
+  /// `AppColors.gold` for sale, `AppColors.info` for rent.
   final Color accent;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    // Pill background: navy when selected, accent colour when idle.
+    final pillBg = selected ? AppColors.navy : accent;
+
+    // Gold is a light/bright hue — use navy text for legibility.
+    // Blue and navy are dark — use white text.
+    final bool onLight = !selected && accent == AppColors.gold;
+    final textColor = onLight ? AppColors.navy : Colors.white;
+
+    // Dot: gold accent on selected state; otherwise contrasting dot on the fill.
+    final dotColor = selected
+        ? AppColors.gold
+        : onLight
+            ? AppColors.navy.withValues(alpha: 0.55)
+            : Colors.white.withValues(alpha: 0.75);
+
+    // Shadow matches the pill colour for a natural glow.
+    final shadowColor = pillBg.withValues(alpha: selected ? 0.40 : 0.38);
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -31,19 +55,16 @@ class PriceMarker extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: selected ? AppColors.navy : Colors.white,
+                color: pillBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: selected ? AppColors.navy : accent.withValues(alpha: 0.55),
-                  width: 1.4,
-                ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.navy.withValues(alpha: selected ? 0.30 : 0.16),
-                    blurRadius: selected ? 14 : 8,
+                    color: shadowColor,
+                    blurRadius: selected ? 16 : 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -51,11 +72,12 @@ class PriceMarker extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     width: 7,
                     height: 7,
                     decoration: BoxDecoration(
-                      color: selected ? AppColors.gold : accent,
+                      color: dotColor,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -66,18 +88,16 @@ class PriceMarker extends StatelessWidget {
                       fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.3,
-                      color: selected ? Colors.white : AppColors.navy,
+                      color: textColor,
                     ),
                   ),
                 ],
               ),
             ),
-            // Downward pointer to the exact coordinate.
+            // Downward pointer anchors the pin to the exact coordinate.
             CustomPaint(
               size: const Size(12, 7),
-              painter: _PointerPainter(
-                color: selected ? AppColors.navy : Colors.white,
-              ),
+              painter: _PointerPainter(color: pillBg),
             ),
           ],
         ),

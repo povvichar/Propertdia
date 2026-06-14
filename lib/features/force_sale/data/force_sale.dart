@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
+// Re-export shared formatters so screens importing this data file keep usd().
+export '../../../shared/utils/format.dart';
+
 enum SaleType { bankOwned, auction, urgent, distressed }
 
 extension SaleTypeX on SaleType {
@@ -28,7 +31,6 @@ class ForceSaleProperty {
     required this.province,
     required this.propertyType,
     required this.saleType,
-    required this.reason,
     required this.askingPrice,
     required this.marketPrice,
     required this.beds,
@@ -39,6 +41,7 @@ class ForceSaleProperty {
     required this.agentName,
     required this.agentContact,
     this.gallery = const [],
+    this.features = const [],
     this.lat,
     this.lng,
   });
@@ -49,7 +52,6 @@ class ForceSaleProperty {
   final String province;
   final String propertyType;
   final SaleType saleType;
-  final String reason;
   final int askingPrice;
   final int marketPrice;
   final int beds;
@@ -60,22 +62,18 @@ class ForceSaleProperty {
   final String agentName;
   final String agentContact;
   final List<String> gallery;
+  final List<String> features;
   final double? lat;
   final double? lng;
+
+  List<String> get photos => [
+        imageUrl,
+        ...gallery.where((photo) => photo != imageUrl),
+      ];
 
   int get discountPct => marketPrice <= 0
       ? 0
       : (((marketPrice - askingPrice) / marketPrice) * 100).round();
-}
-
-String usd(int v) {
-  final s = v.toString();
-  final b = StringBuffer(r'$');
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return b.toString();
 }
 
 // ── Filtering ───────────────────────────────────────────────────────────────
@@ -171,7 +169,6 @@ const mockForceSale = <ForceSaleProperty>[
     province: 'Phnom Penh',
     propertyType: 'Villa',
     saleType: SaleType.bankOwned,
-    reason: 'Bank repossession · clear Hard Title',
     askingPrice: 318000,
     marketPrice: 465000,
     beds: 4,
@@ -180,6 +177,17 @@ const mockForceSale = <ForceSaleProperty>[
     daysLeft: 6,
     imageUrl:
         'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=900&q=80',
+      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=900&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80',
+    ],
+    features: [
+      'Private swimming pool',
+      'Hard title ready for transfer',
+      'Secure gated parking',
+      'Modern fitted kitchen',
+    ],
     agentName: 'Chan Rithy',
     agentContact: '@chanrithy',
     lat: 11.5430,
@@ -192,7 +200,6 @@ const mockForceSale = <ForceSaleProperty>[
     province: 'Phnom Penh',
     propertyType: 'Condo',
     saleType: SaleType.auction,
-    reason: 'Court-ordered auction · reserve set',
     askingPrice: 132000,
     marketPrice: 168000,
     beds: 2,
@@ -201,6 +208,17 @@ const mockForceSale = <ForceSaleProperty>[
     daysLeft: 12,
     imageUrl:
         'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=900&q=80',
+      'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=900&q=80',
+      'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=900&q=80',
+    ],
+    features: [
+      'River and city views',
+      'Private balcony',
+      'Resident fitness center',
+      '24/7 building security',
+    ],
     agentName: 'Sophea Lim',
     agentContact: '+855 12 345 678',
     lat: 11.5715,
@@ -213,7 +231,6 @@ const mockForceSale = <ForceSaleProperty>[
     province: 'Phnom Penh',
     propertyType: 'Borey House',
     saleType: SaleType.urgent,
-    reason: 'Owner relocating abroad · must sell',
     askingPrice: 148000,
     marketPrice: 205000,
     beds: 4,
@@ -222,6 +239,17 @@ const mockForceSale = <ForceSaleProperty>[
     daysLeft: 3,
     imageUrl:
         'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=900&q=80',
+      'https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?w=900&q=80',
+      'https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=900&q=80',
+    ],
+    features: [
+      'Borey community security',
+      'Covered car parking',
+      'Spacious family living area',
+      'Move-in ready condition',
+    ],
     agentName: 'Dara Kim',
     agentContact: '@darakim',
     lat: 11.6052,
@@ -234,7 +262,6 @@ const mockForceSale = <ForceSaleProperty>[
     province: 'Preah Sihanouk',
     propertyType: 'Land',
     saleType: SaleType.distressed,
-    reason: 'Stalled project · liquidation',
     askingPrice: 92000,
     marketPrice: 150000,
     beds: 0,
@@ -243,6 +270,17 @@ const mockForceSale = <ForceSaleProperty>[
     daysLeft: 9,
     imageUrl:
         'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=900&q=80',
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900&q=80',
+      'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=80',
+    ],
+    features: [
+      'Beachfront access',
+      'Road access available',
+      'Flat development-ready land',
+      'Suitable for hospitality projects',
+    ],
     agentName: 'Visal Chea',
     agentContact: '@visalchea',
     lat: 10.6270,
@@ -255,7 +293,6 @@ const mockForceSale = <ForceSaleProperty>[
     province: 'Battambang',
     propertyType: 'Shophouse',
     saleType: SaleType.bankOwned,
-    reason: 'Foreclosed · ready to transfer',
     askingPrice: 78000,
     marketPrice: 112000,
     beds: 3,
@@ -264,6 +301,17 @@ const mockForceSale = <ForceSaleProperty>[
     daysLeft: 18,
     imageUrl:
         'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1600047508788-786f3865b4b9?w=900&q=80',
+      'https://images.unsplash.com/photo-1600566752229-250ed79470f8?w=900&q=80',
+      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=900&q=80',
+    ],
+    features: [
+      'Ground-floor commercial space',
+      'Separate upper-floor residence',
+      'Street-facing frontage',
+      'Ready for title transfer',
+    ],
     agentName: 'Nida Sok',
     agentContact: '+855 70 123 456',
     lat: 13.0957,
@@ -276,7 +324,6 @@ const mockForceSale = <ForceSaleProperty>[
     province: 'Siem Reap',
     propertyType: 'Apartment',
     saleType: SaleType.urgent,
-    reason: 'Medical emergency · quick close',
     askingPrice: 64000,
     marketPrice: 89000,
     beds: 2,
@@ -285,6 +332,17 @@ const mockForceSale = <ForceSaleProperty>[
     daysLeft: 4,
     imageUrl:
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&q=80',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=900&q=80',
+      'https://images.unsplash.com/photo-1560448075-bb485b067938?w=900&q=80',
+    ],
+    features: [
+      'Fully furnished interior',
+      'Private balcony',
+      'Central city location',
+      'Secure resident parking',
+    ],
     agentName: 'Sophea Lim',
     agentContact: '@sophea',
     lat: 13.3633,

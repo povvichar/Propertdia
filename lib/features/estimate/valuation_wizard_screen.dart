@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -8,10 +7,11 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/data/cambodia.dart';
 import '../../shared/widgets/bank_select.dart';
 import '../../shared/widgets/form_fields.dart';
-import '../../shared/widgets/glass_icon_button.dart';
 import '../../shared/widgets/map_pick_field.dart';
 import '../../shared/widgets/photo_gallery.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/wizard_bottom_bar.dart';
+import '../../shared/widgets/wizard_header.dart';
 import 'data/valuation.dart';
 
 class ValuationWizardScreen extends StatefulWidget {
@@ -54,7 +54,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   ContactMethod _contact = ContactMethod.telegram;
   final _contactInfo = TextEditingController();
   String? _bank;
-
+  ValuationPurpose _purpose = ValuationPurpose.sale;
   late final Valuation _result;
 
   @override
@@ -69,12 +69,41 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
 
   bool get _canContinue => switch (_step) {
         0 => _address.text.trim().isNotEmpty,
-        1 => _size.text.trim().isNotEmpty,
+        1 => _size.text.trim().isNotEmpty &&
+            (widget.type != ValuationType.land || _landTitle != null) &&
+            (widget.type != ValuationType.building || _buildingType != null),
         2 => _name.text.trim().isNotEmpty &&
             _contactInfo.text.trim().isNotEmpty,
         3 => _bank != null,
         _ => false,
       };
+
+  String? get _validationHint {
+    if (_canContinue) return null;
+    return switch (_step) {
+      0 => _address.text.trim().isEmpty
+          ? 'Enter a property address to continue'
+          : null,
+      1 => _size.text.trim().isEmpty
+          ? 'Enter the property size to continue'
+          : (widget.type == ValuationType.land && _landTitle == null)
+              ? 'Select a land title type to continue'
+              : (widget.type == ValuationType.building && _buildingType == null)
+                  ? 'Select a property type to continue'
+                  : null,
+      2 => _name.text.trim().isEmpty
+          ? 'Enter your name to continue'
+          : 'Enter your contact info to continue',
+      3 => 'Choose a payment method to continue',
+      _ => null,
+    };
+  }
+
+  /// Non-blocking format hint for the contact field (does not gate the step).
+  String? get _contactWarning => contactFormatWarning(
+        isTelegram: _contact == ContactMethod.telegram,
+        value: _contactInfo.text,
+      );
 
   Future<void> _pickOnMap() async {
     final initial = _location ?? kCambodiaCenter;
@@ -117,11 +146,12 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       type: widget.type,
       status: ValuationStatus.requested,
       address: _address.text.trim(),
+      province: '',
       applicantName: _name.text.trim(),
       lat: _location?.latitude,
       lng: _location?.longitude,
-      purpose: ValuationPurpose.sale,
-      propertyType: isLand ? 'Land' : (_buildingType ?? 'Villa'),
+      purpose: _purpose,
+      propertyType: isLand ? 'Land' : _buildingType!,
       contactMethod: _contact,
       contactInfo: _contactInfo.text.trim(),
       submittedDate: DateTime.now(),
@@ -150,7 +180,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              _WizardHeader(
+              WizardHeader(
                 title: widget.type.label,
                 step: _step,
                 total: _total,
@@ -168,11 +198,12 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
                   ],
                 ),
               ),
-              _BottomBar(
+              WizardBottomBar(
                 showBack: _step > 0,
                 onBack: _back,
                 label: lastStep ? 'Pay ${usd(widget.type.fee)}' : 'Continue',
                 enabled: _canContinue,
+                hint: _validationHint,
                 onNext: _next,
               ),
             ],
@@ -195,7 +226,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
           subtitle: 'Enter the location and pin it on the map.',
         ),
         const SizedBox(height: 20),
-        const FieldLabel('Location'),
+        const FieldLabel('Location', required: true),
         InputField(
           controller: _address,
           hint: 'e.g. No. 12, Street 310, Sangkat …, City / Province',
@@ -204,6 +235,18 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         ),
         const SizedBox(height: 10),
         MapPickField(location: _location, onPick: _pickOnMap),
+        const SizedBox(height: 18),
+        const FieldLabel('Valuation purpose'),
+        for (final p in ValuationPurpose.values)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: OptionTile(
+              label: p.label,
+              asset: p.asset,
+              selected: _purpose == p,
+              onTap: () => setState(() => _purpose = p),
+            ),
+          ),
       ]);
 
   Widget _stepDetails() {
@@ -214,7 +257,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         subtitle: 'Provide the measurements and key attributes.',
       ),
       const SizedBox(height: 20),
-      FieldLabel(isLand ? 'Land size' : 'Building size'),
+      FieldLabel(isLand ? 'Land size' : 'Building size', required: true),
       InputField(
         controller: _size,
         hint: 'e.g. 320',
@@ -224,14 +267,14 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       ),
       const SizedBox(height: 18),
       if (isLand) ...[
-        const FieldLabel('Land title type'),
+        const FieldLabel('Land title type', required: true),
         ChoiceChipsRow(
           options: kLandTitles,
           selected: _landTitle,
           onSelect: (t) => setState(() => _landTitle = t),
         ),
       ] else ...[
-        const FieldLabel('Property type'),
+        const FieldLabel('Property type', required: true),
         ChoiceChipsRow(
           options: const ['Villa', 'Condo', 'Apartment', 'Shophouse', 'Townhouse'],
           selected: _buildingType,
@@ -275,7 +318,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
           style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 20),
-        const FieldLabel('Your name'),
+        const FieldLabel('Your name', required: true),
         InputField(
           controller: _name,
           hint: 'e.g. Chan Rithy',
@@ -286,8 +329,12 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         ChoiceChipsRow(
           options: const ['Telegram', 'Phone'],
           selected: _contact == ContactMethod.telegram ? 'Telegram' : 'Phone',
-          onSelect: (v) => setState(() => _contact =
-              v == 'Telegram' ? ContactMethod.telegram : ContactMethod.phone),
+          onSelect: (v) {
+            final next =
+                v == 'Telegram' ? ContactMethod.telegram : ContactMethod.phone;
+            if (next != _contact) _contactInfo.clear();
+            setState(() => _contact = next);
+          },
         ),
         const SizedBox(height: 14),
         InputField(
@@ -300,6 +347,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
               : TextInputType.text,
           onChanged: (_) => setState(() {}),
         ),
+        if (_contactWarning != null) InlineHint(_contactWarning!),
       ]);
 
   Widget _stepReview() {
@@ -315,16 +363,17 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.cardShadow,
         ),
         child: Column(
           children: [
             _row('Type', widget.type.label),
+            _row('Purpose', _purpose.label),
             _row('Location', _address.text.trim()),
             if (_location != null) _row('Pinned', formatLatLng(_location!)),
             _row(isLand ? 'Land size' : 'Building size', '${_size.text} m²'),
             if (isLand && _landTitle != null) _row('Title', _landTitle!),
-            if (!isLand) _row('Property', _buildingType ?? 'Villa'),
+            if (!isLand) _row('Property', _buildingType!),
             if (!isLand) _row('Rooms', '$_beds bd · $_baths ba'),
             _row('Photos', '${_photos.length} added'),
             _row('Applicant', _name.text.trim()),
@@ -337,8 +386,9 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: AppColors.cardShadow,
         ),
         child: Row(
           children: [
@@ -409,147 +459,6 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   }
 }
 
-// ── Header & bottom bar ──────────────────────────────────────────────────
-
-class _WizardHeader extends StatelessWidget {
-  const _WizardHeader({
-    required this.title,
-    required this.step,
-    required this.total,
-    required this.onBack,
-  });
-
-  final String title;
-  final int step;
-  final int total;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              GlassIconButton(
-                asset: 'assets/icons/base/caretright.svg',
-                onTap: onBack,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              Text(
-                'Step ${step + 1}/$total',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              for (var i = 0; i < total; i++) ...[
-                Expanded(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: i <= step ? AppColors.gold : AppColors.iconTile,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-                if (i < total - 1) const SizedBox(width: 6),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomBar extends StatelessWidget {
-  const _BottomBar({
-    required this.showBack,
-    required this.onBack,
-    required this.label,
-    required this.enabled,
-    required this.onNext,
-  });
-
-  final bool showBack;
-  final VoidCallback onBack;
-  final String label;
-  final bool enabled;
-  final VoidCallback onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (showBack) ...[
-            GestureDetector(
-              onTap: onBack,
-              child: Container(
-                height: 48,
-                width: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: SvgPicture.asset(
-                    'assets/icons/base/caretright.svg',
-                    width: 18,
-                    height: 18,
-                    colorFilter:
-                        const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: PrimaryButton(
-              label: label,
-              enabled: enabled,
-              onPressed: enabled ? onNext : () {},
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Success ──────────────────────────────────────────────────────────────
 
 class _SuccessView extends StatelessWidget {
@@ -574,7 +483,7 @@ class _SuccessView extends StatelessWidget {
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F973D).withValues(alpha: 0.12),
+                    color: AppColors.success.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -582,7 +491,7 @@ class _SuccessView extends StatelessWidget {
                       width: 64,
                       height: 64,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF0F973D),
+                        color: AppColors.success,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.check_rounded,

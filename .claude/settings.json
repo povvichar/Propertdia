@@ -37,11 +37,39 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(flutter clean *)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Bash(flutter analyze *)",
+      "Bash(mkdir -p /Users/min/propertdia/.vscode)",
+      "Bash(flutter pub *)",
+      "Bash(FM=$\\(find ~/.pub-cache/hosted -maxdepth 1 -type d -name 'flutter_map-7.0.2' | head -1\\); echo \"PKG: $FM\"; *)",
+      "Read(//Users/min/.pub-cache/hosted/**)",
+      "Bash(FM=$\\(find ~/.pub-cache -type d -name 'flutter_map-7.0.2' 2>/dev/null | head -1\\); echo \"PKG: $FM\"; ls \"$FM/lib\" 2>/dev/null | head)",
+      "Read(//Users/min/.pub-cache/**)",
+      "Bash(git checkout *)",
+      "Bash(git mv *)",
+      "Bash(git fetch *)",
+      "Bash(git rebase *)",
+      "Bash(git stash *)",
+      "Bash(dart fix *)",
+      "Bash(grep -vE \"^[a-z] |key commands|DevTools|VM Service|^$\")",
+      "Bash(pkill -f \"flutter_tools.snapshot run\")",
+      "Bash(pkill -f \"tail -f /tmp/flutter_ctl\")",
+      "Bash(sed -i '' '365,434d' lib/features/auth/register_screen.dart)",
+      "Bash(sed -i '' \"s#import '../../shared/widgets/primary_button.dart';#import '../../shared/widgets/primary_button.dart';\\\\nimport '../../shared/widgets/social_auth.dart';#\" lib/features/auth/register_screen.dart)",
+      "Bash(sed -i '' \"s#initialLocation: '/',#initialLocation: '/home',#\" lib/routes/app_router.dart)",
+      "Bash(sed -i '' \"s#final homeTabProvider = StateProvider<int>\\(\\(ref\\) => 0\\);#final homeTabProvider = StateProvider<int>\\(\\(ref\\) => 1\\);#\" lib/shared/providers/app_providers.dart)",
+      "Bash(sed -i '' \"s#  Account? _current = kInvestorAccount;#  Account? _current;#\" lib/features/auth/data/account.dart)",
+      "Bash(sed -i '' \"s#final homeTabProvider = StateProvider<int>\\(\\(ref\\) => 3\\);#final homeTabProvider = StateProvider<int>\\(\\(ref\\) => 0\\);#\" lib/shared/providers/app_providers.dart)",
+      "Bash(sed -i '' \"s#initialLocation: '/home',#initialLocation: '/',#\" lib/routes/app_router.dart)",
+      "Bash(break)",
+      "Bash(flutter build *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(xargs sed -i '' \"s|asset: 'assets/icons/base/careright.svg'|asset: 'assets/icons/base/careleft.svg'|g\")"
     ],
     "additionalDirectories": [
       "/Users/min/.claude/projects/-Users-min-propertdia/memory",
-      "/tmp"
+      "/tmp",
+      "/Users/min/propertdia"
     ]
   },
   "hooks": {
