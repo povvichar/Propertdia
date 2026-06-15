@@ -29,7 +29,8 @@ class SheetShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
@@ -324,7 +325,8 @@ class _AmountSheetState extends State<_AmountSheet> {
             Row(
               children: [
                 for (final m in payMethods) ...[
-                  Expanded(child: _MethodChip(
+                  Expanded(
+                      child: _MethodChip(
                     method: m,
                     selected: _method == m.name,
                     onTap: () => setState(() => _method = m.name),
@@ -406,7 +408,8 @@ class _MethodChip extends StatelessWidget {
 
 /// Deposit runs as a full-screen flow so an in-progress payment can't be
 /// dismissed by accident. See `DepositScreen`.
-Future<void> runDeposit(BuildContext context) => context.push('/invest/deposit');
+Future<void> runDeposit(BuildContext context) =>
+    context.push('/invest/deposit');
 
 Future<void> runWithdraw(BuildContext context) async {
   if (investStore.balance <= 0) {
@@ -539,53 +542,7 @@ Future<bool?> showMembershipSheet(BuildContext context) {
           ),
           const SizedBox(height: 18),
           for (final b in investorBenefits) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.goldSoft,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      b.icon,
-                      width: 18,
-                      height: 18,
-                      colorFilter: const ColorFilter.mode(
-                          AppColors.goldDark, BlendMode.srcIn),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        b.title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        b.blurb,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            _BenefitSheetRow(benefit: b),
             const SizedBox(height: 14),
           ],
           const SizedBox(height: 4),
@@ -613,6 +570,91 @@ Future<bool?> showMembershipSheet(BuildContext context) {
   );
 }
 
+/// Read-only sheet listing the Investor Club benefits, opened from the
+/// info (ⓘ) button on the membership card.
+Future<void> showInvestorBenefitsSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => SheetShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SheetTitle(
+            'Investor benefits',
+            subtitle: 'What you unlock as an Investor Club member.',
+          ),
+          const SizedBox(height: 18),
+          for (final b in investorBenefits) ...[
+            _BenefitSheetRow(benefit: b),
+            const SizedBox(height: 14),
+          ],
+          const SizedBox(height: 2),
+        ],
+      ),
+    ),
+  );
+}
+
+/// One investor benefit, styled for a light bottom sheet.
+class _BenefitSheetRow extends StatelessWidget {
+  const _BenefitSheetRow({required this.benefit});
+
+  final InvestorBenefit benefit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.goldSoft,
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Center(
+            child: SvgPicture.asset(
+              benefit.icon,
+              width: 18,
+              height: 18,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.goldDark, BlendMode.srcIn),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                benefit.title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                benefit.blurb,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Loan application flow ────────────────────────────────────────────────────
 
 Future<void> runLoanApply(
@@ -638,7 +680,8 @@ Future<void> runLoanApply(
           _LoanRow(label: 'Loan amount', value: usd(amount)),
           _LoanRow(label: 'Tenure', value: '$years years'),
           _LoanRow(
-              label: 'Interest', value: '${bank.annualRate.toStringAsFixed(1)}% p.a.'),
+              label: 'Interest',
+              value: '${bank.annualRate.toStringAsFixed(1)}% p.a.'),
           _LoanRow(label: 'Est. monthly', value: usd(monthly), bold: true),
           const SizedBox(height: 20),
           PrimaryButton(
@@ -651,8 +694,8 @@ Future<void> runLoanApply(
     ),
   );
   if (ok == true && context.mounted) {
-    investToast(
-        context, 'Application sent — ${bank.name} will contact you on Telegram');
+    investToast(context,
+        'Application sent — ${bank.name} will contact you on Telegram');
   }
 }
 

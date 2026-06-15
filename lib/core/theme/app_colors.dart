@@ -44,6 +44,15 @@ abstract class AppColors {
     end: Alignment.bottomCenter,
   );
 
+  /// Immersive module hero header — bright blue fading to deep navy.
+  static const Color heroHeaderTop = Color(0xFF405CA5);
+  static const Color heroHeaderEnd = Color(0xFF18223C);
+  static const Gradient heroHeader = LinearGradient(
+    colors: [heroHeaderTop, heroHeaderEnd],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
   static const Gradient photoOverlay = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,

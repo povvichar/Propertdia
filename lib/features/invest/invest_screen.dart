@@ -26,40 +26,51 @@ class _InvestScreenState extends State<InvestScreen> {
         backgroundColor: AppColors.background,
         body: SafeArea(
           bottom: false,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Column(
-                  children: [
-                    InvestTopBar(
-                      title: 'Invest & Loan',
-                      onBack: () => context.pop(),
-                    ),
-                    const SizedBox(height: 16),
-                    SegmentedTabs(
-                      labels: const ['Invest', 'Wallet', 'Loan'],
-                      index: _tab,
-                      onChanged: (i) => setState(() => _tab = i),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: AnimatedBuilder(
-                  animation: investStore,
-                  builder: (context, _) => IndexedStack(
-                    index: _tab,
-                    children: [
+          child: AnimatedBuilder(
+            animation: investStore,
+            builder: (context, _) {
+              // Wallet is revealed only once the user is an investor; general and
+              // pending users see Invest | Loan.
+              final tabs = <({String label, Widget view})>[
+                (
+                  label: 'Invest',
+                  view:
                       _InvestTab(onGoToWallet: () => setState(() => _tab = 1)),
-                      _WalletTab(onGoToInvest: () => setState(() => _tab = 0)),
-                      const _LoanTab(),
-                    ],
-                  ),
                 ),
-              ),
-            ],
+                if (investStore.isInvestor)
+                  (label: 'Wallet', view: const _WalletTab()),
+                (label: 'Loan', view: const _LoanTab()),
+              ];
+              final index = _tab.clamp(0, tabs.length - 1);
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Column(
+                      children: [
+                        InvestTopBar(
+                          title: 'Invest & Loan',
+                          onBack: () => context.pop(),
+                        ),
+                        const SizedBox(height: 16),
+                        SegmentedTabs(
+                          labels: [for (final t in tabs) t.label],
+                          index: index,
+                          onChanged: (i) => setState(() => _tab = i),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: IndexedStack(
+                      index: index,
+                      children: [for (final t in tabs) t.view],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -123,7 +134,7 @@ class _MembershipCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
+        gradient: AppColors.heroHeader,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -136,21 +147,45 @@ class _MembershipCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'INVESTOR CLUB',
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w800,
-                color: AppColors.gold,
-                letterSpacing: 0.6,
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'INVESTOR CLUB',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.gold,
+                    letterSpacing: 0.6,
+                  ),
+                ),
               ),
-            ),
+              const Spacer(),
+              // Member benefits now live behind this info button.
+              GestureDetector(
+                onTap: () => showInvestorBenefitsSheet(context),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 17,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           const Text(
@@ -171,12 +206,7 @@ class _MembershipCard extends StatelessWidget {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 18),
-          for (final b in investorBenefits) ...[
-            _BenefitRow(benefit: b),
-            const SizedBox(height: 14),
-          ],
-          const SizedBox(height: 2),
+          const SizedBox(height: 20),
           _GoldButton(
             label: 'Request Membership',
             onTap: () => showMembershipSheet(context),
@@ -253,63 +283,6 @@ class _PendingReviewCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _BenefitRow extends StatelessWidget {
-  const _BenefitRow({required this.benefit});
-
-  final InvestorBenefit benefit;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: Center(
-            child: SvgPicture.asset(
-              benefit.icon,
-              width: 19,
-              height: 19,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                benefit.title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                benefit.blurb,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.68),
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -656,18 +629,10 @@ class _GoldButton extends StatelessWidget {
 // ── Tab 2 · Wallet ───────────────────────────────────────────────────────────
 
 class _WalletTab extends StatelessWidget {
-  const _WalletTab({required this.onGoToInvest});
-
-  final VoidCallback onGoToInvest;
+  const _WalletTab();
 
   @override
   Widget build(BuildContext context) {
-    if (!investStore.isInvestor) {
-      return _WalletLocked(
-        pending: investStore.isPendingReview,
-        onGoToInvest: onGoToInvest,
-      );
-    }
     final txns = investStore.transactions;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
@@ -684,101 +649,6 @@ class _WalletTab extends StatelessWidget {
           const _WalletEmpty()
         else
           for (final t in txns) _TxnRow(txn: t),
-      ],
-    );
-  }
-}
-
-class _WalletLocked extends StatelessWidget {
-  const _WalletLocked({required this.pending, required this.onGoToInvest});
-
-  final bool pending;
-  final VoidCallback onGoToInvest;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(22, 32, 22, 28),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: AppColors.cardShadow,
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Center(
-                  child: SvgPicture.asset(
-                    pending
-                        ? 'assets/icons/base/clock.svg'
-                        : 'assets/icons/base/locked.svg',
-                    width: 30,
-                    height: 30,
-                    colorFilter: const ColorFilter.mode(
-                        AppColors.navyIcon, BlendMode.srcIn),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                pending ? 'Activation in review' : 'Your wallet is locked',
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                pending
-                    ? 'Your wallet activates as soon as your investor request is approved.'
-                    : 'Become an investor to activate your wallet and fund projects.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 20),
-              if (pending)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: AppColors.goldSoft,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Under admin review',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.goldDark,
-                    ),
-                  ),
-                )
-              else
-                _GoldButton(
-                  label: 'Become an Investor',
-                  onTap: () async {
-                    final joined = await showMembershipSheet(context);
-                    if (joined == true && context.mounted) onGoToInvest();
-                  },
-                ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -1274,7 +1144,8 @@ class _CalculatorCard extends StatelessWidget {
                         label: 'Total payable', value: usd(totalPayable)),
                   ),
                   _heroDivider(),
-                  Expanded(child: _HeroStat(label: 'Term', value: '$years yrs')),
+                  Expanded(
+                      child: _HeroStat(label: 'Term', value: '$years yrs')),
                   _heroDivider(),
                   Expanded(
                     child: _HeroStat(

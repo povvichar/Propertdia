@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../shared/widgets/glass_icon_button.dart';
+import '../../shared/widgets/module_hero_sliver.dart';
 import 'data/title_service.dart';
 import 'widgets/title_widgets.dart';
 
@@ -14,165 +14,78 @@ class TitleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          bottom: false,
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        body: CustomScrollView(
+          slivers: [
+            const ModuleHeroSliver(
+              title: 'Title Services',
+              headline: 'Verify & Transfer Property Titles',
+              subtitle:
+                  'Cadastral registry checks · secure uploads · status tracking',
+              icon: 'assets/icons/base/certificate.svg',
+              iconSize: 150,
+              iconTop: 10,
+              iconRight: -18,
+            ),
+            ModuleHeroSheet(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionTitle('Choose a service'),
+                  const SizedBox(height: 12),
+                  for (final t in TitleServiceType.values) ...[
+                    _ServiceCard(type: t),
+                    const SizedBox(height: 10),
+                  ],
+                  const SizedBox(height: 14),
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          GlassIconButton(
-                            asset: 'assets/icons/base/careleft.svg',
-                            onTap: () => context.pop(),
+                      const _SectionTitle('My applications'),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.iconTile,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${mockTitleApplications.length}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
                           ),
-                          const SizedBox(width: 14),
-                          const Text(
-                            'Title Services',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.4,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      const _IntroCard(),
-                      const SizedBox(height: 24),
-                      const _SectionTitle('Choose a service'),
-                      const SizedBox(height: 12),
-                      for (final t in TitleServiceType.values) ...[
-                        _ServiceCard(type: t),
-                        const SizedBox(height: 10),
-                      ],
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          const _SectionTitle('My applications'),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.iconTile,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${mockTitleApplications.length}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.navy,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            if (mockTitleApplications.isEmpty)
+              const SliverToBoxAdapter(
+                child: _EmptyHub(
+                  icon: 'assets/icons/base/locked.svg',
+                  message:
+                      'No applications yet.\nStart a service above to get going.',
+                ),
+              )
+            else
+              SliverList.separated(
+                itemCount: mockTitleApplications.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) => Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16,
+                      i == mockTitleApplications.length - 1 ? 32 : 0),
+                  child: _ApplicationCard(app: mockTitleApplications[i]),
                 ),
               ),
-              if (mockTitleApplications.isEmpty)
-                const SliverToBoxAdapter(
-                  child: _EmptyHub(
-                    icon: 'assets/icons/base/locked.svg',
-                    message:
-                        'No applications yet.\nStart a service above to get going.',
-                  ),
-                )
-              else
-                SliverList.separated(
-                  itemCount: mockTitleApplications.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) => Padding(
-                    padding: EdgeInsets.fromLTRB(16, 0, 16,
-                        i == mockTitleApplications.length - 1 ? 32 : 0),
-                    child: _ApplicationCard(app: mockTitleApplications[i]),
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-class _IntroCard extends StatelessWidget {
-  const _IntroCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Verify & transfer property titles',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.3,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Cadastral registry checks · secure uploads · status tracking',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: Colors.white.withValues(alpha: 0.78),
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: SvgPicture.asset(
-                'assets/icons/base/shield.svg',
-                width: 28,
-                height: 28,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -264,8 +177,8 @@ class _ServiceCard extends StatelessWidget {
               'assets/icons/base/careright.svg',
               width: 18,
               height: 18,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.textSecondary, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                  AppColors.textSecondary, BlendMode.srcIn),
             ),
           ],
         ),
