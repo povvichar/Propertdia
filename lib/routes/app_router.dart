@@ -1,6 +1,9 @@
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../features/about/about_screen.dart';
+import '../features/about/data/about.dart';
+import '../features/about/team_member_detail_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/estimate/data/valuation.dart';
@@ -33,8 +36,6 @@ import '../features/title/title_screen.dart';
 import '../features/title/eligibility_screen.dart';
 import '../features/notifications/notification_screen.dart';
 import '../features/profile/profile_settings_screens.dart';
-import '../features/saved_searches/data/saved_searches.dart';
-import '../features/saved_searches/saved_searches_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -44,6 +45,13 @@ final appRouter = GoRouter(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen()),
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
+    GoRoute(
+      path: '/about/team',
+      builder: (context, state) =>
+          TeamMemberDetailScreen(
+              member: state.extra as TeamMember? ?? aboutTeam.first),
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
         path: '/register', builder: (context, state) => const RegisterScreen()),
@@ -53,8 +61,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/map-price',
-      builder: (context, state) =>
-          MapPriceScreen(initial: state.extra as SavedSearch?),
+      builder: (context, state) => const MapPriceScreen(),
     ),
     GoRoute(
       path: '/estimate',
@@ -109,8 +116,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/force-sale',
-      builder: (context, state) =>
-          ForceSaleScreen(initial: state.extra as SavedSearch?),
+      builder: (context, state) => const ForceSaleScreen(),
     ),
     GoRoute(
       path: '/force-sale/detail',
@@ -181,10 +187,6 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationScreen(),
-    ),
-    GoRoute(
-      path: '/saved-searches',
-      builder: (context, state) => const SavedSearchesScreen(),
     ),
     GoRoute(
       path: '/profile/notifications',

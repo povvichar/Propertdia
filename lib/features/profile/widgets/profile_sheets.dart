@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/providers/app_providers.dart';
+import '../../../shared/utils/l10n_ext.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../auth/data/account.dart';
 
@@ -374,7 +375,7 @@ class _LinkRow extends StatelessWidget {
 void showLanguage(BuildContext context) {
   _show(
     context,
-    'Language',
+    context.l10n.profileLanguage,
     Consumer(
       builder: (context, ref, _) {
         final current = ref.watch(languageProvider);

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_text_styles.dart';
@@ -15,9 +14,13 @@ abstract class AppTheme {
         surface: AppColors.surface,
       ),
       scaffoldBackgroundColor: AppColors.background,
+      fontFamily: kFontFamily,
+      fontFamilyFallback: kFontFamilyFallback,
     );
 
-    final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
+    final textTheme = base.textTheme.apply(
+      fontFamily: kFontFamily,
+      fontFamilyFallback: kFontFamilyFallback,
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
     );

@@ -594,7 +594,7 @@ class TelegramSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Screen(
-      title: 'Telegram Support',
+      title: 'Help & Support',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

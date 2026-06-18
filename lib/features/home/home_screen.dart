@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/property.dart';
 import '../../shared/providers/app_providers.dart';
+import '../../shared/utils/l10n_ext.dart';
 import '../favorites/favorites_view.dart';
 import '../media/media_view.dart';
 import '../profile/profile_view.dart';
@@ -59,7 +61,7 @@ class _HomeBody extends StatelessWidget {
                 const SizedBox(height: 20),
                 const ServiceGrid(),
                 const SizedBox(height: 20),
-                const _SectionTitle(title: 'Best Price'),
+                _SectionTitle(title: context.l10n.homeBestPrice),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 218,
@@ -126,12 +128,12 @@ class _NavItem {
   final String label;
 }
 
-const _navItems = [
-  _NavItem('assets/icons/base/home.svg', 'Home'),
-  _NavItem('assets/icons/base/bookmark.svg', 'Favorite'),
-  _NavItem('assets/icons/base/clapperboard.svg', 'Media'),
-  _NavItem('assets/icons/base/profile.svg', 'Profile'),
-];
+List<_NavItem> _navItemsFor(AppLocalizations l) => [
+      _NavItem('assets/icons/base/home.svg', l.navHome),
+      _NavItem('assets/icons/base/bookmark.svg', l.navFavorite),
+      _NavItem('assets/icons/base/clapperboard.svg', l.navMedia),
+      _NavItem('assets/icons/base/profile.svg', l.navProfile),
+    ];
 
 class _GlassNav extends StatelessWidget {
   const _GlassNav({required this.current, required this.onChanged});
@@ -142,6 +144,7 @@ class _GlassNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final navItems = _navItemsFor(context.l10n);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 0, 20, bottomInset > 0 ? bottomInset : 16),
@@ -161,10 +164,10 @@ class _GlassNav extends StatelessWidget {
             ),
             child: Row(
               children: [
-                for (var i = 0; i < _navItems.length; i++)
+                for (var i = 0; i < navItems.length; i++)
                   Expanded(
                     child: _GlassNavItem(
-                      item: _navItems[i],
+                      item: navItems[i],
                       active: i == current,
                       onTap: () => onChanged(i),
                     ),
