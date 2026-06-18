@@ -15,6 +15,8 @@ class GlassIconButton extends StatelessWidget {
     this.size = 40,
     this.iconSize = 18,
     this.iconColor = AppColors.navy,
+    this.fillColor,
+    this.borderColor,
   });
 
   final String asset;
@@ -22,6 +24,12 @@ class GlassIconButton extends StatelessWidget {
   final double size;
   final double iconSize;
   final Color iconColor;
+
+  /// Glass fill. Defaults to a light frost (white @78%) for light backgrounds.
+  final Color? fillColor;
+
+  /// Hairline border. Defaults to white @70%.
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +42,10 @@ class GlassIconButton extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.78),
+              color: fillColor ?? Colors.white.withValues(alpha: 0.78),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.7),
+                color: borderColor ?? Colors.white.withValues(alpha: 0.7),
                 width: 1,
               ),
               boxShadow: [

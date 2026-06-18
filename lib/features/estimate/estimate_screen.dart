@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../shared/widgets/glass_icon_button.dart';
+import '../../shared/widgets/module_hero_sliver.dart';
 import 'data/valuation.dart';
 import 'widgets/estimate_widgets.dart';
 
@@ -14,181 +14,85 @@ class EstimateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          bottom: false,
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        body: CustomScrollView(
+          slivers: [
+            const ModuleHeroSliver(
+              title: 'Estimate & Valuation',
+              headline: 'Professional Property Valuation',
+              subtitle:
+                  'Certified valuers · comparable analysis · PDF report in 3–5 days',
+              icon: 'assets/icons/base/house.svg',
+              iconSize: 168,
+              iconTop: 22,
+              iconRight: -28,
+            ),
+            ModuleHeroSheet(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionTitle('Request a valuation'),
+                  const SizedBox(height: 12),
+                  const Row(
                     children: [
-                      const _TopBar(),
-                      const SizedBox(height: 16),
-                      const _IntroCard(),
-                      const SizedBox(height: 24),
-                      const _SectionTitle('Request a valuation'),
-                      const SizedBox(height: 12),
-                      const Row(
-                        children: [
-                          Expanded(
-                            child: _TypeCard(type: ValuationType.land),
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: _TypeCard(type: ValuationType.building),
-                          ),
-                        ],
+                      Expanded(
+                        child: _TypeCard(type: ValuationType.land),
                       ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          const _SectionTitle('My valuations'),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.iconTile,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${mockValuations.length}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.navy,
-                              ),
-                            ),
-                          ),
-                        ],
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _TypeCard(type: ValuationType.building),
                       ),
-                      const SizedBox(height: 12),
                     ],
                   ),
-                ),
-              ),
-              if (mockValuations.isEmpty)
-                const SliverToBoxAdapter(
-                  child: _EmptyHub(
-                    icon: 'assets/icons/base/scale.svg',
-                    message:
-                        'No valuations yet.\nRequest one above to get started.',
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const _SectionTitle('My valuations'),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.iconTile,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${mockValuations.length}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              else
-                SliverList.separated(
-                  itemCount: mockValuations.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) => Padding(
-                    padding: EdgeInsets.fromLTRB(
-                        16, 0, 16, i == mockValuations.length - 1 ? 32 : 0),
-                    child: _ValuationCard(valuation: mockValuations[i]),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        GlassIconButton(
-          asset: 'assets/icons/base/careleft.svg',
-          onTap: () => context.pop(),
-        ),
-        const SizedBox(width: 14),
-        const Text(
-          'Estimate & Valuation',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.4,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _IntroCard extends StatelessWidget {
-  const _IntroCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Professional property valuation',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.3,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Certified valuers · comparable analysis · PDF report in 3–5 days',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: Colors.white.withValues(alpha: 0.78),
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: SvgPicture.asset(
-                'assets/icons/base/scale.svg',
-                width: 28,
-                height: 28,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
+                  const SizedBox(height: 12),
+                ],
               ),
             ),
-          ),
-        ],
+            if (mockValuations.isEmpty)
+              const SliverToBoxAdapter(
+                child: _EmptyHub(
+                  icon: 'assets/icons/base/scale.svg',
+                  message:
+                      'No valuations yet.\nRequest one above to get started.',
+                ),
+              )
+            else
+              SliverList.separated(
+                itemCount: mockValuations.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) => Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      16, 0, 16, i == mockValuations.length - 1 ? 32 : 0),
+                  child: _ValuationCard(valuation: mockValuations[i]),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -272,8 +176,8 @@ class _TypeCard extends StatelessWidget {
                       'assets/icons/base/arrowright.svg',
                       width: 14,
                       height: 14,
-                      colorFilter: const ColorFilter.mode(
-                          Colors.white, BlendMode.srcIn),
+                      colorFilter:
+                          const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                     ),
                   ),
                 ),

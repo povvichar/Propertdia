@@ -3,10 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../shared/widgets/glass_icon_button.dart';
+import '../../shared/widgets/module_hero_sliver.dart';
 import 'data/partnership.dart';
 
 class PartnershipScreen extends StatelessWidget {
@@ -18,125 +17,48 @@ class PartnershipScreen extends StatelessWidget {
     final global = partnersByScope(PartnerScope.global);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          bottom: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            children: [
-              Row(
+        body: CustomScrollView(
+          slivers: [
+            const ModuleHeroSliver(
+              title: 'Partnership',
+              headline: 'Trusted Partner ecosystem',
+              subtitle:
+                  'Building a smarter, more connected property ecosystem in Cambodia.',
+              icon: 'assets/icons/base/Partnership.svg',
+              iconSize: 176,
+              iconTop: 10,
+              iconRight: -20,
+            ),
+            ModuleHeroSheet(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GlassIconButton(
-                    asset: 'assets/icons/base/careleft.svg',
-                    onTap: () => context.pop(),
+                  _GroupHeader(
+                    title: 'Local Partners',
+                    count: local.length,
+                    icon: 'assets/icons/base/mappin.svg',
                   ),
-                  const SizedBox(width: 14),
-                  const Text(
-                    'Partnership',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.4,
-                    ),
+                  const SizedBox(height: 14),
+                  _PartnerGrid(partners: local),
+                  const SizedBox(height: 26),
+                  _GroupHeader(
+                    title: 'Global Partners',
+                    count: global.length,
+                    icon: 'assets/icons/base/globe.svg',
                   ),
+                  const SizedBox(height: 14),
+                  _PartnerGrid(partners: global),
+                  const SizedBox(height: 26),
+                  const _BecomePartnerCard(),
                 ],
               ),
-              const SizedBox(height: 16),
-              const _IntroCard(),
-              const SizedBox(height: 24),
-              _GroupHeader(
-                title: 'Local Partners',
-                count: local.length,
-                icon: 'assets/icons/base/mappin.svg',
-              ),
-              const SizedBox(height: 14),
-              _PartnerGrid(partners: local),
-              const SizedBox(height: 26),
-              _GroupHeader(
-                title: 'Global Partners',
-                count: global.length,
-                icon: 'assets/icons/base/globe.svg',
-              ),
-              const SizedBox(height: 14),
-              _PartnerGrid(partners: global),
-              const SizedBox(height: 26),
-              const _BecomePartnerCard(),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-class _IntroCard extends StatelessWidget {
-  const _IntroCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Trusted partner ecosystem',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.3,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Banks, developers and global advisors working with PROPERTDIA.',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: Colors.white.withValues(alpha: 0.78),
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: SvgPicture.asset(
-                'assets/icons/base/group_profile.svg',
-                width: 28,
-                height: 28,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -348,8 +270,7 @@ class _PartnerSheet extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.82),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border(
               top: BorderSide(
                 color: Colors.white.withValues(alpha: 0.7),
@@ -362,81 +283,80 @@ class _PartnerSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              PartnerLogo(partner: p, size: 58),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      p.name,
-                      style: const TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.goldSoft,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Text(
-                        p.category,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.goldDark,
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  PartnerLogo(partner: p, size: 58),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.name,
+                          style: const TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.4,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.goldSoft,
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: Text(
+                            p.category,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.goldDark,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            p.tagline,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-              height: 1.55,
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Row(
-            children: [
-              Icon(Icons.verified_rounded,
-                  size: 18, color: AppColors.gold),
-              SizedBox(width: 6),
+              const SizedBox(height: 16),
               Text(
-                'Verified PROPERTDIA partner',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                p.tagline,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                  height: 1.55,
                 ),
               ),
-            ],
-          ),
+              const SizedBox(height: 18),
+              const Row(
+                children: [
+                  Icon(Icons.verified_rounded, size: 18, color: AppColors.gold),
+                  SizedBox(width: 6),
+                  Text(
+                    'Verified PROPERTDIA partner',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -483,8 +403,8 @@ class _BecomePartnerCard extends StatelessWidget {
                   'assets/icons/base/telegram.svg',
                   width: 22,
                   height: 22,
-                  colorFilter:
-                      const ColorFilter.mode(AppColors.goldDark, BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                      AppColors.goldDark, BlendMode.srcIn),
                 ),
               ),
             ),

@@ -4,7 +4,7 @@ Flutter implementation of the PROPERTDIA mobile app UI, built from the Figma
 designs (Onboarding + Home V3). Front-end only: all data is mocked, no backend
 calls.
 
-**Brand:** Gold `#F2A71B` · Navy `#1E2A47` · Background `#F1F3F8` · Inter typeface
+**Brand:** Gold `#F2A71B` · Navy `#1E2A47` · Background `#F1F3F8` · Manrope typeface
 
 ## Screens
 

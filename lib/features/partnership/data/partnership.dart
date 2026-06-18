@@ -58,13 +58,6 @@ const mockPartners = <Partner>[
     tagline: 'Digital payments & deposits',
     logoAsset: 'assets/icons/base/wing.svg',
   ),
-  Partner(
-    name: 'Prince Bank',
-    category: 'Banking & Finance',
-    scope: PartnerScope.local,
-    tagline: 'Property-backed lending',
-    brandColor: Color(0xFF6D2C8F),
-  ),
 
   // ── Developers (local) ──
   Partner(
