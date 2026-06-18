@@ -25,5 +25,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/partners/
     - assets/icons/home/
     - assets/icons/base/

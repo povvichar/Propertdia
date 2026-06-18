@@ -40,6 +40,20 @@ String fmtDateTime(DateTime d) {
   return '${fmtDate(d)} · $h:$mm $ap';
 }
 
+/// Returns the date [days] business days (Mon–Fri) after [from]. Used to show
+/// an expected completion date for valuation / title requests.
+DateTime addBusinessDays(DateTime from, int days) {
+  var d = from;
+  var added = 0;
+  while (added < days) {
+    d = d.add(const Duration(days: 1));
+    if (d.weekday != DateTime.saturday && d.weekday != DateTime.sunday) {
+      added++;
+    }
+  }
+  return d;
+}
+
 /// Non-blocking format hint for a Telegram/phone contact field, or null when
 /// the value is empty or looks valid. Phone check is Cambodia-friendly: at
 /// least 8 digits (e.g. `012 345 678` or `+855 12 345 678`).

@@ -10,6 +10,12 @@ abstract class AppColors {
   static const Color navyDeep = Color(0xFF16203A);
   static const Color navyIcon = Color(0xFF233560);
 
+  // Investor tiers (gold/goldSoft reused for the Gold rank)
+  static const Color silver = Color(0xFF8E97A6);
+  static const Color silverSoft = Color(0xFFEEF0F3);
+  static const Color platinum = Color(0xFF3A4660);
+  static const Color platinumSoft = Color(0xFFE7EAF1);
+
   // Surfaces
   static const Color background = Color(0xFFF9FAFF);
   static const Color surface = Colors.white;
@@ -51,6 +57,14 @@ abstract class AppColors {
     colors: [heroHeaderTop, heroHeaderEnd],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
+  );
+
+  /// Diagonal variant of the hero gradient — bright blue at the bottom-right
+  /// fading to deep navy at the top-left. Used for promo/banner cards.
+  static const Gradient heroDiagonal = LinearGradient(
+    colors: [heroHeaderTop, heroHeaderEnd],
+    begin: Alignment.bottomRight,
+    end: Alignment.topLeft,
   );
 
   static const Gradient photoOverlay = LinearGradient(

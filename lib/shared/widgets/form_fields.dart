@@ -180,6 +180,115 @@ class InputField extends StatelessWidget {
   }
 }
 
+/// Tappable field that opens a modal bottom-sheet list of [options] and reports
+/// the chosen value. Renders like [InputField] when empty (placeholder + chevron).
+class SelectField extends StatelessWidget {
+  const SelectField({
+    super.key,
+    required this.value,
+    required this.hint,
+    required this.options,
+    required this.onSelect,
+    this.sheetTitle,
+  });
+
+  final String? value;
+  final String hint;
+  final List<String> options;
+  final ValueChanged<String> onSelect;
+  final String? sheetTitle;
+
+  Future<void> _open(BuildContext context) async {
+    FocusScope.of(context).unfocus();
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+              child: Text(
+                sheetTitle ?? 'Select',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 8),
+                children: [
+                  for (final o in options)
+                    ListTile(
+                      title: Text(
+                        o,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight:
+                              o == value ? FontWeight.w800 : FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      trailing: o == value
+                          ? const Icon(Icons.check_rounded,
+                              color: AppColors.gold)
+                          : null,
+                      onTap: () => Navigator.of(context).pop(o),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) onSelect(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final empty = value == null || value!.isEmpty;
+    return GestureDetector(
+      onTap: () => _open(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                empty ? hint : value!,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: empty ? FontWeight.w400 : FontWeight.w600,
+                  color: empty
+                      ? AppColors.textSecondary.withValues(alpha: 0.8)
+                      : AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down_rounded,
+                color: AppColors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Selectable row card — icon (optional), title, subtitle, radio check.
 class OptionTile extends StatelessWidget {
   const OptionTile({

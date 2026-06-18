@@ -67,6 +67,63 @@ extension ValuationStatusX on ValuationStatus {
       };
 }
 
+/// Itemised valuation service fee. [ValuationType.fee] is the base/anchor (the
+/// "from" price shown while browsing); size, an out-of-Phnom-Penh site visit,
+/// and a certified-report purpose (mortgage/legal) add to it.
+class ValuationQuote {
+  const ValuationQuote({
+    required this.base,
+    required this.sizeAddon,
+    required this.locationAddon,
+    required this.certifiedAddon,
+  });
+
+  final int base;
+  final int sizeAddon;
+  final int locationAddon;
+  final int certifiedAddon;
+
+  int get total => base + sizeAddon + locationAddon + certifiedAddon;
+}
+
+/// Computes the hybrid valuation fee from the request inputs. A valuation can't
+/// be priced on the property's *value* (that's the deliverable), so it's priced
+/// on observable inputs: size, location, and purpose.
+ValuationQuote valuationQuote({
+  required ValuationType type,
+  double? areaSqm,
+  String? province,
+  ValuationPurpose? purpose,
+}) {
+  final base = type.fee;
+
+  final a = areaSqm ?? 0;
+  final sizeAddon = a <= 100
+      ? 0
+      : a <= 300
+          ? 30
+          : a <= 800
+              ? 70
+              : 120;
+
+  final locationAddon =
+      (province != null && province.isNotEmpty && province != 'Phnom Penh')
+          ? 20
+          : 0;
+
+  final certified = purpose == ValuationPurpose.mortgage ||
+      purpose == ValuationPurpose.legal;
+  final certifiedAddon =
+      certified ? ((base + sizeAddon + locationAddon) * 0.3).round() : 0;
+
+  return ValuationQuote(
+    base: base,
+    sizeAddon: sizeAddon,
+    locationAddon: locationAddon,
+    certifiedAddon: certifiedAddon,
+  );
+}
+
 class Valuation {
   const Valuation({
     required this.id,
@@ -118,9 +175,43 @@ class Valuation {
   final int comparables;
   final int photoCount;
 
+  /// Any estimate is attached (indicative on submit, certified once reviewed).
+  bool get hasEstimate => estimatedValue != null;
+
+  /// Estimate is still the auto-computed indicative figure, not yet certified
+  /// by a human valuer.
+  bool get isIndicative =>
+      status == ValuationStatus.requested ||
+      status == ValuationStatus.inReview;
+
+  /// A certified figure is available (valuer approved/completed the request).
   bool get hasValue => estimatedValue != null &&
       (status == ValuationStatus.approved ||
           status == ValuationStatus.completed);
+}
+
+/// Partially-filled inputs carried from the free Instant Estimate into the paid
+/// Professional Valuation wizard, so the user doesn't re-enter anything.
+class EstimatePrefill {
+  const EstimatePrefill({
+    required this.type,
+    this.province,
+    this.propertyType,
+    this.size,
+    this.beds,
+    this.baths,
+    this.landTitle,
+    this.purpose,
+  });
+
+  final ValuationType type;
+  final String? province;
+  final String? propertyType;
+  final String? size;
+  final int? beds;
+  final int? baths;
+  final String? landTitle;
+  final ValuationPurpose? purpose;
 }
 
 const kLandTitles = ['Hard Title', 'Soft Title', 'LMAP Title'];
@@ -194,4 +285,80 @@ final mockValuations = <Valuation>[
     lat: 10.6093,
     lng: 103.5295,
   ),
+  ..._generatedValuations(),
 ];
+
+/// Extra demo valuations so the hub preview + history exercise scroll/filter at
+/// volume. Cycles type, status & purpose so every status filter has matches.
+List<Valuation> _generatedValuations() {
+  const names = [
+    'Vannak Chea', 'Bopha Sok', 'Rithy Pen', 'Sreymom Kong', 'Sovann Meas',
+    'Pisey Heng', 'Kosal Ny', 'Channary Va', 'Veasna Tep', 'Dalin Sam',
+    'Makara Yon', 'Sothea Lim', 'Phalla Roeun', 'Visal Oeur', 'Sokha Chan',
+  ];
+  const places = <(String, String)>[
+    ('Street 271, Sangkat Tomnop Teuk', 'Phnom Penh'),
+    ('Wat Bo Road, Sala Kamreuk', 'Siem Reap'),
+    ('Mittapheap, Sangkat 4', 'Preah Sihanouk'),
+    ('Krong Doun Kaev, Roka Knong', 'Takeo'),
+    ('Krong Kampong Cham', 'Kampong Cham'),
+    ('Krong Serei Saophoan', 'Banteay Meanchey'),
+    ('Svay Por, Krong Battambang', 'Battambang'),
+  ];
+  const propByType = {
+    ValuationType.land: 'Land',
+    ValuationType.building: 'Villa',
+  };
+  const statuses = ValuationStatus.values;
+  const purposes = ValuationPurpose.values;
+
+  return List.generate(15, (i) {
+    final type =
+        i.isEven ? ValuationType.building : ValuationType.land;
+    final status = statuses[i % statuses.length];
+    final place = places[i % places.length];
+    final hasValue = status == ValuationStatus.approved ||
+        status == ValuationStatus.completed;
+    final base = 60000 + i * 14500;
+    return Valuation(
+      id: 'v${i + 4}',
+      refNo: 'VL-2026-${(540 + i * 13).toString().padLeft(4, '0')}',
+      type: type,
+      status: status,
+      address: place.$1,
+      province: place.$2,
+      applicantName: names[i % names.length],
+      purpose: purposes[i % purposes.length],
+      propertyType: propByType[type]!,
+      contactMethod: i.isEven ? ContactMethod.telegram : ContactMethod.phone,
+      contactInfo: i.isEven
+          ? '@${names[i % names.length].split(' ').first.toLowerCase()}'
+          : '+855 1${i % 9} 234 567',
+      submittedDate: DateTime(2026, 6, 1).subtract(Duration(days: i * 3)),
+      landSize: type == ValuationType.land ? '${300 + i * 20}' : null,
+      buildingSize: type == ValuationType.building ? '${90 + i * 8}' : null,
+      beds: type == ValuationType.building ? 2 + (i % 4) : null,
+      baths: type == ValuationType.building ? 1 + (i % 3) : null,
+      estimatedValue: hasValue ? base : null,
+      valueLow: hasValue ? (base * 0.94).round() : null,
+      valueHigh: hasValue ? (base * 1.06).round() : null,
+    );
+  });
+}
+
+/// Live store of the user's valuation requests (seeded with the mock history).
+/// Newly submitted requests are inserted here so the hub reflects them.
+class ValuationStore extends ChangeNotifier {
+  final List<Valuation> _items = [...mockValuations];
+
+  List<Valuation> get items => List.unmodifiable(_items);
+  int get count => _items.length;
+  bool get isEmpty => _items.isEmpty;
+
+  void add(Valuation v) {
+    _items.insert(0, v);
+    notifyListeners();
+  }
+}
+
+final valuationStore = ValuationStore();

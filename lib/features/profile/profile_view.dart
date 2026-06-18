@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/providers/app_providers.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/tier_badge.dart';
 import '../auth/data/account.dart';
 import '../invest/data/invest.dart';
 import 'widgets/profile_sheets.dart' show showLanguage;
@@ -166,6 +167,11 @@ class _SignedInView extends StatelessWidget {
             label: 'Saved Drafts',
             onTap: () => context.push('/profile/drafts'),
           ),
+          _Row(
+            icon: 'assets/icons/base/bookmark.svg',
+            label: 'Saved Searches',
+            onTap: () => context.push('/saved-searches'),
+          ),
         ]),
         const SizedBox(height: 22),
 
@@ -303,22 +309,7 @@ class _Header extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     if (account.investor)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Investor',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.gold,
-                          ),
-                        ),
-                      ),
+                      TierBadge(investStore.tier, compact: true, onDark: true),
                   ],
                 ),
                 const SizedBox(height: 2),

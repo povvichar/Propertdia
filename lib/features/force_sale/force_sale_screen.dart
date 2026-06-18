@@ -5,12 +5,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/glass_icon_button.dart';
+import '../saved_searches/data/saved_searches.dart';
+import '../saved_searches/saved_searches_screen.dart';
 import 'data/force_sale.dart';
 import 'widgets/force_sale_card.dart';
 import 'widgets/force_sale_filter_sheet.dart';
 
 class ForceSaleScreen extends StatefulWidget {
-  const ForceSaleScreen({super.key});
+  const ForceSaleScreen({super.key, this.initial});
+
+  /// When opened from a saved search, its criteria seed the filters.
+  final SavedSearch? initial;
 
   @override
   State<ForceSaleScreen> createState() => _ForceSaleScreenState();
@@ -20,6 +25,16 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
   SaleType? _quickType;
   ForceSaleFilter _adv = const ForceSaleFilter();
   bool _savedOnly = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final s = widget.initial;
+    if (s != null && s.source == SearchSource.forceSale) {
+      _quickType = s.saleType;
+      _adv = s.forceSaleFilter ?? const ForceSaleFilter();
+    }
+  }
 
   List<ForceSaleProperty> get _filtered => mockForceSale
       .where((p) =>
@@ -32,6 +47,44 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
     final result =
         await showForceSaleFilter(context, current: _adv, all: mockForceSale);
     if (result != null) setState(() => _adv = result);
+  }
+
+  /// Auto-name from the active filters (e.g. "Auction · Villa · under $100k").
+  String get _defaultName {
+    final probe = SavedSearch(
+      id: '_',
+      name: '',
+      source: SearchSource.forceSale,
+      saleType: _quickType,
+      forceSaleFilter: _adv,
+    );
+    return probe.summary;
+  }
+
+  Future<void> _saveSearch() async {
+    final saved = await showSaveSearchSheet(
+      context,
+      source: SearchSource.forceSale,
+      defaultName: _defaultName,
+      saleType: _quickType,
+      forceSaleFilter: _adv,
+    );
+    if (saved != null && mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.navy,
+            content: const Text("Search saved. We'll alert you to new matches."),
+            action: SnackBarAction(
+              label: 'View',
+              textColor: AppColors.gold,
+              onPressed: () => context.push('/saved-searches'),
+            ),
+          ),
+        );
+    }
   }
 
   @override
@@ -71,15 +124,22 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
                             onSelect: (t) => setState(() => _quickType = t),
                           ),
                           const SizedBox(height: 20),
-                          Text(
-                            _savedOnly
-                                ? '${list.length} saved'
-                                : '${list.length} opportunities',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                _savedOnly
+                                    ? '${list.length} saved'
+                                    : '${list.length} opportunities',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const Spacer(),
+                              if (!_savedOnly)
+                                _SaveSearchButton(onTap: _saveSearch),
+                            ],
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -321,6 +381,47 @@ class _TypeChips extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SaveSearchButton extends StatelessWidget {
+  const _SaveSearchButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.navy.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/base/bookmark.svg',
+              width: 15,
+              height: 15,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 6),
+            const Text(
+              'Save search',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.navy,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

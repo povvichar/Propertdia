@@ -20,6 +20,7 @@ class InvestDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = project;
+    final gallery = [p.imageUrl, ...kGalleryExtras];
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
@@ -117,6 +118,15 @@ class InvestDetailScreen extends StatelessWidget {
 
                         // Key facts
                         _FactGrid(project: p),
+                        const SizedBox(height: 14),
+
+                        // Trust strip — full breakdown opens in a sheet
+                        const _ProtectionBanner(),
+                        const SizedBox(height: 22),
+
+                        const _Heading('Gallery'),
+                        const SizedBox(height: 12),
+                        _PhotoGallery(images: gallery),
                         const SizedBox(height: 22),
 
                         const _Heading('About this project'),
@@ -135,6 +145,22 @@ class InvestDetailScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           for (final d in p.dividends) _DividendRow(record: d),
                         ],
+
+                        const SizedBox(height: 22),
+                        const _Heading('Documents'),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Verified due-diligence files for this project.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        for (final d in kProjectDocs) _DocRow(doc: d),
+
+                        const SizedBox(height: 22),
+                        const _ContactCard(),
                       ],
                     ),
                   ),
@@ -153,6 +179,8 @@ class InvestDetailScreen extends StatelessWidget {
                       asset: 'assets/icons/base/careleft.svg',
                       onTap: () => context.pop(),
                     ),
+                    const Spacer(),
+                    FavoriteButton(project: p, onDark: true, size: 40),
                   ],
                 ),
               ),
@@ -468,6 +496,399 @@ class _DividendRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Compact trust strip; tapping (or the ⓘ) opens the full protections sheet.
+class _ProtectionBanner extends StatelessWidget {
+  const _ProtectionBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => showProtectionsSheet(context),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: AppColors.successSoft,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            SvgPicture.asset(
+              'assets/icons/base/shield.svg',
+              width: 20,
+              height: 20,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.success, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Protected investment',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  SizedBox(height: 1),
+                  Text(
+                    'Hard title · escrow · independently vetted',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.info_outline_rounded,
+                size: 19, color: AppColors.success),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoGallery extends StatelessWidget {
+  const _PhotoGallery({required this.images});
+
+  final List<String> images;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 82,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: images.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, i) => GestureDetector(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (_) => _GalleryViewer(images: images, initial: i),
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                Image.network(
+                  images[i],
+                  width: 112,
+                  height: 82,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 112,
+                    height: 82,
+                    color: AppColors.surfaceMuted,
+                  ),
+                ),
+                if (i == images.length - 1 && images.length > 1)
+                  Positioned.fill(
+                    child: Container(
+                      alignment: Alignment.center,
+                      color: AppColors.navy.withValues(alpha: 0.35),
+                      child: Text(
+                        '${images.length} photos',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen swipeable photo viewer with a counter and close button.
+class _GalleryViewer extends StatefulWidget {
+  const _GalleryViewer({required this.images, required this.initial});
+
+  final List<String> images;
+  final int initial;
+
+  @override
+  State<_GalleryViewer> createState() => _GalleryViewerState();
+}
+
+class _GalleryViewerState extends State<_GalleryViewer> {
+  late final PageController _controller =
+      PageController(initialPage: widget.initial);
+  late int _index = widget.initial;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _controller,
+            itemCount: widget.images.length,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemBuilder: (_, i) => InteractiveViewer(
+              minScale: 1,
+              maxScale: 4,
+              child: Center(
+                child: Image.network(
+                  widget.images[i],
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white24,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Row(
+                children: [
+                  GlassIconButton(
+                    asset: 'assets/icons/base/close.svg',
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_index + 1} / ${widget.images.length}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DocRow extends StatelessWidget {
+  const _DocRow({required this.doc});
+
+  final ProjectDoc doc;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => showDocSheet(context, doc),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/base/file_text.svg',
+                  width: 19,
+                  height: 19,
+                  colorFilter:
+                      const ColorFilter.mode(AppColors.danger, BlendMode.srcIn),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doc.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'PDF · ${doc.size}',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SvgPicture.asset(
+              'assets/icons/base/downloadsimple.svg',
+              width: 19,
+              height: 19,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.navyIcon, BlendMode.srcIn),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactCard extends StatelessWidget {
+  const _ContactCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: AppColors.navyDepth,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Questions about this project?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Talk to a PROPERTDIA investment advisor before you commit.',
+            style: TextStyle(
+              fontSize: 12.5,
+              color: Colors.white.withValues(alpha: 0.7),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _ContactButton(
+                  icon: 'assets/icons/base/telegram.svg',
+                  label: 'Telegram',
+                  filled: true,
+                  onTap: () =>
+                      investToast(context, 'Opening Telegram · $kAdvisorTelegram'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ContactButton(
+                  icon: 'assets/icons/base/phone.svg',
+                  label: 'Call',
+                  filled: false,
+                  onTap: () => investToast(context, 'Calling $kAdvisorPhone'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContactButton extends StatelessWidget {
+  const _ContactButton({
+    required this.icon,
+    required this.label,
+    required this.filled,
+    required this.onTap,
+  });
+
+  final String icon;
+  final String label;
+  final bool filled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 46,
+        decoration: BoxDecoration(
+          color: filled ? AppColors.gold : Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              icon,
+              width: 17,
+              height: 17,
+              colorFilter:
+                  const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

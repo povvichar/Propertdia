@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,29 +13,50 @@ import 'widgets/estimate_widgets.dart';
 class EstimateScreen extends StatelessWidget {
   const EstimateScreen({super.key});
 
+  /// How many recent valuations to preview on the hub before "See all".
+  static const _previewCount = 3;
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          slivers: [
-            const ModuleHeroSliver(
+        body: AnimatedBuilder(
+          animation: valuationStore,
+          builder: (context, _) {
+            final all = [...valuationStore.items]
+              ..sort((a, b) => b.submittedDate.compareTo(a.submittedDate));
+            final preview = all.take(_previewCount).toList();
+            return CustomScrollView(
+              slivers: [
+                const ModuleHeroSliver(
               title: 'Estimate & Valuation',
-              headline: 'Professional Property Valuation',
+              headline: 'Know your property’s value',
               subtitle:
-                  'Certified valuers · comparable analysis · PDF report in 3–5 days',
+                  'Free instant estimate · or a certified valuer’s report',
               icon: 'assets/icons/base/house.svg',
               iconSize: 168,
               iconTop: 22,
               iconRight: -28,
             ),
             ModuleHeroSheet(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _SectionTitle('Request a valuation'),
+                  const _InstantCard(),
+                  const SizedBox(height: 24),
+                  const _SectionTitle('Professional valuation'),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Certified figure & signed PDF report by a licensed valuer.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color: AppColors.textSecondary.withValues(alpha: 0.9),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   const Row(
                     children: [
@@ -59,7 +82,7 @@ class EstimateScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          '${mockValuations.length}',
+                          '${all.length}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -67,30 +90,125 @@ class EstimateScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const Spacer(),
+                      if (all.length > _previewCount)
+                        _SeeAllLink(
+                          onTap: () => context.push('/estimate/valuations'),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
+                  if (preview.isEmpty)
+                    const _EmptyHub(
+                      icon: 'assets/icons/base/scale.svg',
+                      message:
+                          'No valuations yet.\nRequest one above to get started.',
+                    )
+                  else
+                    for (var i = 0; i < preview.length; i++) ...[
+                      ValuationCard(valuation: preview[i]),
+                      if (i != preview.length - 1) const SizedBox(height: 12),
+                    ],
                 ],
               ),
             ),
-            if (mockValuations.isEmpty)
-              const SliverToBoxAdapter(
-                child: _EmptyHub(
-                  icon: 'assets/icons/base/scale.svg',
-                  message:
-                      'No valuations yet.\nRequest one above to get started.',
-                ),
-              )
-            else
-              SliverList.separated(
-                itemCount: mockValuations.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => Padding(
-                  padding: EdgeInsets.fromLTRB(
-                      16, 0, 16, i == mockValuations.length - 1 ? 32 : 0),
-                  child: _ValuationCard(valuation: mockValuations[i]),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Free instant-estimate entry — the prominent top tier on the hub.
+class _InstantCard extends StatelessWidget {
+  const _InstantCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/estimate/instant'),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: AppColors.heroDiagonal,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.navy.withValues(alpha: 0.25),
+              blurRadius: 22,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Instant Estimate',
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'FREE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'See what your property is worth in seconds.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.35,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                color: AppColors.gold,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/base/arrowright.svg',
+                  width: 15,
+                  height: 15,
+                  colorFilter:
+                      const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
                 ),
               ),
+            ),
           ],
         ),
       ),
@@ -106,33 +224,30 @@ class _TypeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/estimate/new', extra: type),
+      onTap: () =>
+          context.push('/estimate/new', extra: EstimatePrefill(type: type)),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: AppColors.cardShadow,
+          gradient: AppColors.heroDiagonal,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.navy.withValues(alpha: 0.25),
+              blurRadius: 22,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Center(
-                child: SvgPicture.asset(
-                  type.asset,
-                  width: 24,
-                  height: 24,
-                  colorFilter: const ColorFilter.mode(
-                      AppColors.navyIcon, BlendMode.srcIn),
-                ),
-              ),
+            SvgPicture.asset(
+              type.asset,
+              width: 30,
+              height: 30,
+              colorFilter:
+                  const ColorFilter.mode(Colors.white, BlendMode.srcIn),
             ),
             const SizedBox(height: 14),
             Text(
@@ -140,7 +255,7 @@ class _TypeCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: Colors.white,
                 letterSpacing: -0.2,
               ),
             ),
@@ -149,37 +264,20 @@ class _TypeCard extends StatelessWidget {
               'Valuation',
               style: TextStyle(
                 fontSize: 12.5,
-                color: AppColors.textSecondary.withValues(alpha: 0.9),
+                color: Colors.white.withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'From ${usd(type.fee)}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: const BoxDecoration(
-                    color: AppColors.gold,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      'assets/icons/base/arrowright.svg',
-                      width: 14,
-                      height: 14,
-                      colorFilter:
-                          const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                    ),
-                  ),
+                Flexible(child: _GlassPricePill(price: usd(type.fee))),
+                SvgPicture.asset(
+                  'assets/icons/base/arrowright.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter:
+                      const ColorFilter.mode(Colors.white70, BlendMode.srcIn),
                 ),
               ],
             ),
@@ -190,104 +288,78 @@ class _TypeCard extends StatelessWidget {
   }
 }
 
-class _ValuationCard extends StatelessWidget {
-  const _ValuationCard({required this.valuation});
+/// Liquid-glass price pill — translucent frosted fill over the card gradient.
+class _GlassPricePill extends StatelessWidget {
+  const _GlassPricePill({required this.price});
 
-  final Valuation valuation;
+  final String price;
 
   @override
   Widget build(BuildContext context) {
-    final v = valuation;
-    return GestureDetector(
-      onTap: () => context.push('/estimate/detail', extra: v),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: AppColors.cardShadow,
-        ),
-        child: Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      v.type.asset,
-                      width: 22,
-                      height: 22,
-                      colorFilter: const ColorFilter.mode(
-                          AppColors.navyIcon, BlendMode.srcIn),
-                    ),
-                  ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'From',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white70,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        v.address,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '${v.refNo} · ${shortDate(v.submittedDate)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                price,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
-                const SizedBox(width: 8),
-                StatusBadge(status: v.status, compact: true),
-              ],
-            ),
-            if (v.hasValue) ...[
-              const SizedBox(height: 12),
-              const Divider(height: 1, thickness: 1, color: AppColors.divider),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Text(
-                    'Estimated value',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: AppColors.textSecondary.withValues(alpha: 0.95),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    usd(v.estimatedValue!),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.navy,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                ],
               ),
             ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// "See all" link beside the valuations header when there are more than the
+/// hub preview shows.
+class _SeeAllLink extends StatelessWidget {
+  const _SeeAllLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: const Row(
+        children: [
+          Text(
+            'See all',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+            ),
+          ),
+          SizedBox(width: 2),
+          Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.navy),
+        ],
       ),
     );
   }

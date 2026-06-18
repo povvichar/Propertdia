@@ -13,12 +13,17 @@ class WizardHeader extends StatelessWidget {
     required this.step,
     required this.total,
     required this.onBack,
+    this.onInfo,
   });
 
   final String title;
   final int step;
   final int total;
   final VoidCallback onBack;
+
+  /// Optional handler for a "what is this?" info icon next to the title — wire
+  /// it to open a detail sheet so the step body stays free of a description.
+  final VoidCallback? onInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +41,7 @@ class WizardHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -44,6 +50,23 @@ class WizardHeader extends StatelessWidget {
                   ),
                 ),
               ),
+              // Info icon is pinned to the right (just before the step count)
+              // so it never shifts with the title length.
+              if (onInfo != null) ...[
+                GestureDetector(
+                  onTap: onInfo,
+                  behavior: HitTestBehavior.opaque,
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Text(
                 'Step ${step + 1}/$total',
                 style: const TextStyle(
@@ -84,3 +107,4 @@ class WizardHeader extends StatelessWidget {
     );
   }
 }
+

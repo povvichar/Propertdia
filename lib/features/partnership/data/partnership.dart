@@ -65,6 +65,7 @@ const mockPartners = <Partner>[
     category: 'Developers',
     scope: PartnerScope.local,
     tagline: 'Master-planned Borey communities',
+    logoAsset: 'assets/images/partners/peng_huoth.png',
     brandColor: Color(0xFF0F6B3A),
   ),
   Partner(
@@ -79,6 +80,7 @@ const mockPartners = <Partner>[
     category: 'Developers',
     scope: PartnerScope.local,
     tagline: 'Mixed-use developments',
+    logoAsset: 'assets/images/partners/chip_mong_land.png',
     brandColor: Color(0xFFC0392B),
   ),
   Partner(
@@ -86,6 +88,7 @@ const mockPartners = <Partner>[
     category: 'Developers',
     scope: PartnerScope.local,
     tagline: 'Smart city living, Chroy Changvar',
+    logoAsset: 'assets/images/partners/urbanland.png',
     brandColor: Color(0xFF1F6FB2),
   ),
 

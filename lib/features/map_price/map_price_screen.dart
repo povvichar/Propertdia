@@ -9,6 +9,8 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/models/property.dart';
+import '../saved_searches/data/saved_searches.dart';
+import '../saved_searches/saved_searches_screen.dart';
 import 'widgets/map_glass.dart';
 import 'widgets/price_marker.dart';
 import 'widgets/property_info_card.dart';
@@ -18,8 +20,25 @@ const _kUserLocation = LatLng(11.5564, 104.9282);
 
 enum _ListingFilter { all, sale, rent }
 
+extension on _ListingFilter {
+  String get scope => switch (this) {
+        _ListingFilter.all => kMapScopeAll,
+        _ListingFilter.sale => kMapScopeSale,
+        _ListingFilter.rent => kMapScopeRent,
+      };
+}
+
+_ListingFilter _filterFromScope(String scope) => switch (scope) {
+      kMapScopeSale => _ListingFilter.sale,
+      kMapScopeRent => _ListingFilter.rent,
+      _ => _ListingFilter.all,
+    };
+
 class MapPriceScreen extends StatefulWidget {
-  const MapPriceScreen({super.key});
+  const MapPriceScreen({super.key, this.initial});
+
+  /// When opened from a saved search, its scope seeds the listing filter.
+  final SavedSearch? initial;
 
   @override
   State<MapPriceScreen> createState() => _MapPriceScreenState();
@@ -30,6 +49,15 @@ class _MapPriceScreenState extends State<MapPriceScreen> {
 
   Property? _selected;
   _ListingFilter _filter = _ListingFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    final s = widget.initial;
+    if (s != null && s.source == SearchSource.mapPrice) {
+      _filter = _filterFromScope(s.mapScope);
+    }
+  }
 
   List<Property> get _visible => switch (_filter) {
         _ListingFilter.all => mockMapProperties,
@@ -61,6 +89,36 @@ class _MapPriceScreenState extends State<MapPriceScreen> {
   void _recenter() {
     setState(() => _selected = null);
     _mapController.move(_kUserLocation, 12.6);
+  }
+
+  Future<void> _saveSearch() async {
+    final name = switch (_filter) {
+      _ListingFilter.sale => 'Properties for sale',
+      _ListingFilter.rent => 'Properties for rent',
+      _ListingFilter.all => 'All listings near me',
+    };
+    final saved = await showSaveSearchSheet(
+      context,
+      source: SearchSource.mapPrice,
+      defaultName: name,
+      mapScope: _filter.scope,
+    );
+    if (saved != null && mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.navy,
+            content: const Text("Search saved. We'll alert you to new matches."),
+            action: SnackBarAction(
+              label: 'View',
+              textColor: AppColors.gold,
+              onPressed: () => context.push('/saved-searches'),
+            ),
+          ),
+        );
+    }
   }
 
   @override
@@ -182,6 +240,26 @@ class _MapPriceScreenState extends State<MapPriceScreen> {
                 asset: 'assets/icons/base/target.svg',
                 onTap: _recenter,
                 size: 46,
+              ),
+            ),
+
+            // ── Save-search button (hidden while a card is open) ─────────
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              right: 16,
+              bottom: (hasCard ? 232 : 28) + safeBottom + 58,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: hasCard ? 0 : 1,
+                child: IgnorePointer(
+                  ignoring: hasCard,
+                  child: GlassCircleButton(
+                    asset: 'assets/icons/base/bookmark.svg',
+                    onTap: _saveSearch,
+                    size: 46,
+                  ),
+                ),
               ),
             ),
 
