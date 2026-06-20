@@ -148,9 +148,9 @@ class _EligibilityHubCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.navy.withValues(alpha: 0.25),
-              blurRadius: 22,
-              offset: const Offset(0, 10),
+              color: AppColors.navy.withValues(alpha: 0.16),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),

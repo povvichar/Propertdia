@@ -7,12 +7,14 @@ class Account {
     required this.role,
     required this.email,
     required this.investor,
+    this.phone = '',
   });
 
   final String name;
   final String role;
   final String email;
   final bool investor;
+  final String phone;
 
   String get initials {
     final parts = name.split(' ').where((p) => p.isNotEmpty).toList();

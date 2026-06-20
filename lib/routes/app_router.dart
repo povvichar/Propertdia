@@ -21,6 +21,7 @@ import '../features/invest/deposit_screen.dart';
 import '../features/invest/invest_detail_screen.dart';
 import '../features/invest/invest_screen.dart';
 import '../features/invest/investor_application_screen.dart';
+import '../features/loan/loan_screen.dart';
 import '../features/map_price/map_price_screen.dart';
 import '../features/media/data/media.dart';
 import '../features/media/media_detail_screen.dart';
@@ -151,6 +152,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/invest/opportunities',
       builder: (context, state) => const OpportunitiesScreen(),
+    ),
+    GoRoute(
+      path: '/loan',
+      builder: (context, state) => const LoanScreen(),
     ),
     GoRoute(
       path: '/partnership',

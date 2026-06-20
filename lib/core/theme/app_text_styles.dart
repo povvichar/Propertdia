@@ -1,11 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../shared/providers/app_providers.dart';
+import '../../shared/utils/l10n_text.dart';
 import 'app_colors.dart';
 
-/// App typeface: Google Sans (Latin) with a Google Sans Khmer fallback so Khmer
-/// codepoints shape correctly while staying visually consistent.
-const String kFontFamily = 'Google Sans';
-const List<String> kFontFamilyFallback = ['Google Sans Khmer'];
+/// App typeface: Manrope (Latin) with a Kantumruy Pro fallback so Khmer
+/// codepoints shape correctly while Latin/numbers stay in Manrope. Both are
+/// loaded via the `google_fonts` package.
+///
+/// Referencing `GoogleFonts.kantumruyPro()` here also registers the font with
+/// the engine, which is required for the fallback to actually render.
+final String kFontFamily = GoogleFonts.manrope().fontFamily!;
+final List<String> kFontFamilyFallback = [
+  GoogleFonts.kantumruyPro().fontFamily!,
+];
+
+/// Khmer is a stacking script and should not be letter-spaced — tracking tuned
+/// for Manrope (Latin) crowds or breaks Khmer clusters. So neutralise tracking
+/// to 0 when the app is in Khmer; Latin keeps its [latin] value. Reads the
+/// `currentLanguage` mirror (kept in sync by `PropertdiaApp.build`), so styles —
+/// which are getters re-evaluated each build — track the active language.
+double? khmerSafeLetterSpacing(double? latin) =>
+    currentLanguage == AppLanguage.khmer ? 0 : latin;
 
 TextStyle _sans({
   double? fontSize,
@@ -14,15 +31,13 @@ TextStyle _sans({
   double? letterSpacing,
   double? height,
 }) =>
-    TextStyle(
-      fontFamily: kFontFamily,
-      fontFamilyFallback: kFontFamilyFallback,
+    GoogleFonts.manrope(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
-      letterSpacing: letterSpacing,
+      letterSpacing: khmerSafeLetterSpacing(letterSpacing),
       height: height,
-    );
+    ).copyWith(fontFamilyFallback: kFontFamilyFallback);
 
 abstract class AppTextStyles {
   // ── Display ──────────────────────────────────────────────────────────────

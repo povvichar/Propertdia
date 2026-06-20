@@ -164,6 +164,12 @@ abstract class AppLocalizations {
   /// **'Media'**
   String get navMedia;
 
+  /// No description provided for @navPartnership.
+  ///
+  /// In en, this message translates to:
+  /// **'Partner'**
+  String get navPartnership;
+
   /// No description provided for @navProfile.
   ///
   /// In en, this message translates to:
@@ -257,8 +263,14 @@ abstract class AppLocalizations {
   /// No description provided for @moduleInvest.
   ///
   /// In en, this message translates to:
-  /// **'Invest & Loan'**
+  /// **'Invest'**
   String get moduleInvest;
+
+  /// No description provided for @moduleLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan'**
+  String get moduleLoan;
 
   /// No description provided for @modulePartnership.
   ///

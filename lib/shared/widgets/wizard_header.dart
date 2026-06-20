@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
 import 'glass_icon_button.dart';
 
 /// Shared header for the multi-step wizard flows (valuation, title, …).
@@ -42,11 +43,11 @@ class WizardHeader extends StatelessWidget {
                 child: Text(
                   title,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
-                    letterSpacing: -0.3,
+                    letterSpacing: khmerSafeLetterSpacing(-0.3),
                   ),
                 ),
               ),

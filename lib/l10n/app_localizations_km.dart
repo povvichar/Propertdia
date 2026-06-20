@@ -42,6 +42,9 @@ class AppLocalizationsKm extends AppLocalizations {
   String get navMedia => 'មេឌៀ';
 
   @override
+  String get navPartnership => 'ដៃគូ';
+
+  @override
   String get navProfile => 'គណនី';
 
   @override
@@ -89,7 +92,10 @@ class AppLocalizationsKm extends AppLocalizations {
   String get moduleForceSale => 'លក់បន្ទាន់';
 
   @override
-  String get moduleInvest => 'វិនិយោគ & កម្ចី';
+  String get moduleInvest => 'វិនិយោគ';
+
+  @override
+  String get moduleLoan => 'កម្ចី';
 
   @override
   String get modulePartnership => 'ភាពជាដៃគូ';

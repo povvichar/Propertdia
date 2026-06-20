@@ -11,6 +11,7 @@ import '../../shared/providers/app_providers.dart';
 import '../../shared/utils/l10n_ext.dart';
 import '../favorites/favorites_view.dart';
 import '../media/media_view.dart';
+import '../partnership/partnership_screen.dart';
 import '../profile/profile_view.dart';
 import 'widgets/home_header.dart';
 import 'widgets/property_card.dart';
@@ -32,6 +33,7 @@ class HomeScreen extends ConsumerWidget {
           _HomeBody(),
           FavoritesView(),
           MediaView(),
+          PartnershipScreen(showBack: false),
           ProfileView(),
         ],
       ),
@@ -132,6 +134,7 @@ List<_NavItem> _navItemsFor(AppLocalizations l) => [
       _NavItem('assets/icons/base/home.svg', l.navHome),
       _NavItem('assets/icons/base/bookmark.svg', l.navFavorite),
       _NavItem('assets/icons/base/clapperboard.svg', l.navMedia),
+      _NavItem('assets/icons/base/Partnership.svg', l.navPartnership),
       _NavItem('assets/icons/base/profile.svg', l.navProfile),
     ];
 
@@ -146,22 +149,22 @@ class _GlassNav extends StatelessWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final navItems = _navItemsFor(context.l10n);
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 0, 20, bottomInset > 0 ? bottomInset : 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(38),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-          child: Container(
-            height: 76,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.62),
-              borderRadius: BorderRadius.circular(38),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.65),
-                width: 1.2,
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.82),
+            border: Border(
+              top: BorderSide(
+                color: AppColors.navy.withValues(alpha: 0.08),
+                width: 0.5,
               ),
             ),
+          ),
+          padding: EdgeInsets.only(top: 12, bottom: bottomInset > 0 ? bottomInset : 8),
+          child: SizedBox(
+            height: 50,
             child: Row(
               children: [
                 for (var i = 0; i < navItems.length; i++)
@@ -194,45 +197,31 @@ class _GlassNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = active ? AppColors.navy : AppColors.textSecondary;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.symmetric(
-            horizontal: active ? 22 : 16,
-            vertical: active ? 10 : 0,
-          ),
-          decoration: BoxDecoration(
-            color: active ? AppColors.navy.withValues(alpha: 0.10) : Colors.transparent,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                item.asset,
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(
-                  active ? AppColors.navy : AppColors.textSecondary,
-                  BlendMode.srcIn,
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              item.asset,
+              width: 25,
+              height: 25,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                color: color,
               ),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 220),
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  color: active ? AppColors.navy : AppColors.textSecondary,
-                  letterSpacing: active ? -0.1 : 0,
-                ),
-                child: Text(item.label),
-              ),
-            ],
-          ),
+              child: Text(item.label),
+            ),
+          ],
         ),
       ),
     );

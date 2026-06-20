@@ -38,11 +38,20 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _manualLogin() {
+    // Unified identifier: match the typed phone OR email against a demo
+    // account, otherwise fall back to the normal persona. Password-based,
+    // no SMS — keeps the auth flow free of paid verification.
+    final id = _email.text.trim().toLowerCase();
     final match = mockAccounts.firstWhere(
-      (a) => a.email.toLowerCase() == _email.text.trim().toLowerCase(),
+      (a) => a.email.toLowerCase() == id || a.phone == _email.text.trim(),
       orElse: () => kNormalAccount,
     );
     _signIn(match);
+  }
+
+  Future<void> _openSignUp() async {
+    final account = await showSignUpSheet(context);
+    if (account != null && mounted) _signIn(account);
   }
 
   @override
@@ -105,10 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 36),
 
                     _Field(
-                      label: 'Email',
-                      icon: 'assets/icons/base/email.svg',
+                      label: 'Phone or email',
+                      icon: 'assets/icons/base/profile.svg',
                       controller: _email,
-                      hint: 'you@email.com',
+                      hint: '012 345 678  or  you@email.com',
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
@@ -158,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     Center(
                       child: GestureDetector(
-                        onTap: () => context.go('/register'),
+                        onTap: _openSignUp,
                         child: const Text.rich(
                           TextSpan(
                             style: TextStyle(fontSize: 13.5),
@@ -404,6 +413,173 @@ class _FieldState extends State<_Field> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Sign-up modal ────────────────────────────────────────────────────────────
+
+/// Bottom-sheet sign-up (name + email + password). Returns the new [Account] on
+/// success, or null if dismissed. Sign-in/navigation is handled by the caller.
+Future<Account?> showSignUpSheet(BuildContext context) {
+  return showModalBottomSheet<Account>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _SignUpSheet(),
+  );
+}
+
+class _SignUpSheet extends StatefulWidget {
+  const _SignUpSheet();
+
+  @override
+  State<_SignUpSheet> createState() => _SignUpSheetState();
+}
+
+class _SignUpSheetState extends State<_SignUpSheet> {
+  final _phone = TextEditingController();
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _obscure = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Re-evaluate the button's enabled state as the user types.
+    for (final c in [_phone, _name, _email, _password]) {
+      c.addListener(() => setState(() {}));
+    }
+  }
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    _name.dispose();
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  bool get _valid =>
+      _phone.text.trim().isNotEmpty &&
+      _name.text.trim().isNotEmpty &&
+      _email.text.trim().isNotEmpty &&
+      _password.text.isNotEmpty;
+
+  void _submit() {
+    if (!_valid) return;
+    // Phone is just an identifier (no SMS verification) — keeps sign-up free.
+    final account = Account(
+      name: _name.text.trim(),
+      role: 'Home buyer',
+      email: _email.text.trim(),
+      investor: false,
+      phone: _phone.text.trim(),
+    );
+    Navigator.of(context).pop(account);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      // Lift the sheet above the keyboard.
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Create account',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Register with your phone number, then set a\nname, email and password.',
+              style: TextStyle(
+                fontSize: 13.5,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _Field(
+              label: 'Phone number',
+              icon: 'assets/icons/base/smartphone.svg',
+              controller: _phone,
+              hint: '012 345 678',
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 14),
+            _Field(
+              label: 'Full name',
+              icon: 'assets/icons/base/profile.svg',
+              controller: _name,
+              hint: 'Dara Sok',
+              keyboardType: TextInputType.name,
+            ),
+            const SizedBox(height: 14),
+            _Field(
+              label: 'Email',
+              icon: 'assets/icons/base/email.svg',
+              controller: _email,
+              hint: 'you@email.com',
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 14),
+            _Field(
+              label: 'Password',
+              icon: 'assets/icons/base/locked.svg',
+              controller: _password,
+              hint: '••••••••',
+              obscure: _obscure,
+              trailing: GestureDetector(
+                onTap: () => setState(() => _obscure = !_obscure),
+                child: SvgPicture.asset(
+                  _obscure
+                      ? 'assets/icons/base/eye_closed.svg'
+                      : 'assets/icons/base/eye.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                      AppColors.textSecondary, BlendMode.srcIn),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            PrimaryButton(
+              label: 'Create account',
+              trailingIcon: null,
+              enabled: _valid,
+              onPressed: _submit,
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 }

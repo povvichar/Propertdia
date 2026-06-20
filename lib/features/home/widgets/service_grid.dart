@@ -7,11 +7,10 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/l10n_ext.dart';
 
 class _Service {
-  const _Service(this.asset, this.label, {this.multiColor = false, this.route});
+  const _Service(this.asset, this.label, {this.route});
 
   final String asset;
   final String label;
-  final bool multiColor;
   final String? route;
 }
 
@@ -24,10 +23,10 @@ List<_Service> _servicesFor(AppLocalizations l) => [
           route: '/title'),
       _Service('assets/icons/home/force_sale.svg', l.moduleForceSale,
           route: '/force-sale'),
-      _Service('assets/icons/home/invest_loan.svg', l.moduleInvest,
+      _Service('assets/icons/base/money-bag.svg', l.moduleInvest,
           route: '/invest'),
-      _Service('assets/icons/home/partnership.svg', l.modulePartnership,
-          multiColor: true, route: '/partnership'),
+      _Service('assets/icons/home/invest_loan.svg', l.moduleLoan,
+          route: '/loan'),
     ];
 
 class ServiceGrid extends StatelessWidget {
@@ -89,24 +88,15 @@ class _ServiceTileState extends State<_ServiceTile> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              widget.service.multiColor
-                  ? Opacity(
-                      opacity: _pressed ? 0.6 : 1.0,
-                      child: SvgPicture.asset(
-                        widget.service.asset,
-                        width: 24,
-                        height: 24,
-                      ),
-                    )
-                  : SvgPicture.asset(
-                      widget.service.asset,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(
-                        _pressed ? AppColors.gold : AppColors.navyIcon,
-                        BlendMode.srcIn,
-                      ),
-                    ),
+              SvgPicture.asset(
+                widget.service.asset,
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  _pressed ? AppColors.gold : AppColors.navyIcon,
+                  BlendMode.srcIn,
+                ),
+              ),
               const SizedBox(height: 6),
               Text(
                 widget.service.label,

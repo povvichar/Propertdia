@@ -42,6 +42,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navMedia => 'Media';
 
   @override
+  String get navPartnership => 'Partner';
+
+  @override
   String get navProfile => 'Profile';
 
   @override
@@ -89,7 +92,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moduleForceSale => 'Force Sale';
 
   @override
-  String get moduleInvest => 'Invest & Loan';
+  String get moduleInvest => 'Invest';
+
+  @override
+  String get moduleLoan => 'Loan';
 
   @override
   String get modulePartnership => 'Partnership';

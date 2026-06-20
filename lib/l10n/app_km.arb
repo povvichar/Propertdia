@@ -14,6 +14,7 @@
   "navHome": "ទំព័រដើម",
   "navFavorite": "ចំណូលចិត្ត",
   "navMedia": "មេឌៀ",
+  "navPartnership": "ដៃគូ",
   "navProfile": "គណនី",
 
   "onbMapTitle": "តម្លៃពិតប្រាកដនៅលើផែនទី",
@@ -32,7 +33,8 @@
   "moduleEstimate": "ប៉ាន់ប្រមាណ",
   "moduleTitle": "សេវាប្លង់",
   "moduleForceSale": "លក់បន្ទាន់",
-  "moduleInvest": "វិនិយោគ & កម្ចី",
+  "moduleInvest": "វិនិយោគ",
+  "moduleLoan": "កម្ចី",
   "modulePartnership": "ភាពជាដៃគូ",
 
   "profileGroupAccount": "គណនី",

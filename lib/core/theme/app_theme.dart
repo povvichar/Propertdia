@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_text_styles.dart';
@@ -18,8 +19,8 @@ abstract class AppTheme {
       fontFamilyFallback: kFontFamilyFallback,
     );
 
-    final textTheme = base.textTheme.apply(
-      fontFamily: kFontFamily,
+    // Manrope (Latin) with a Kantumruy Pro fallback for Khmer codepoints.
+    final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
       fontFamilyFallback: kFontFamilyFallback,
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
@@ -44,7 +45,7 @@ abstract class AppTheme {
           ),
           textStyle: AppTextStyles.labelLarge.copyWith(
             color: Colors.white,
-            letterSpacing: 0.15,
+            letterSpacing: khmerSafeLetterSpacing(0.15),
           ),
         ),
       ),

@@ -9,7 +9,10 @@ import '../../shared/widgets/module_hero_sliver.dart';
 import 'data/partnership.dart';
 
 class PartnershipScreen extends StatelessWidget {
-  const PartnershipScreen({super.key});
+  const PartnershipScreen({super.key, this.showBack = true});
+
+  /// Hide the header back button when shown as a top-level nav tab.
+  final bool showBack;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,7 @@ class PartnershipScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         body: CustomScrollView(
           slivers: [
-            const ModuleHeroSliver(
+            ModuleHeroSliver(
               title: 'Partnership',
               headline: 'Trusted Partner ecosystem',
               subtitle:
@@ -31,6 +34,7 @@ class PartnershipScreen extends StatelessWidget {
               iconSize: 176,
               iconTop: 10,
               iconRight: -20,
+              showBack: showBack,
             ),
             ModuleHeroSheet(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
