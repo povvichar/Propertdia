@@ -6,18 +6,28 @@ import '../../core/theme/app_colors.dart';
 
 /// Heading + optional subtitle at the top of each wizard step.
 class StepHeader extends StatelessWidget {
-  const StepHeader({super.key, required this.title, this.subtitle});
+  const StepHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.center = false,
+  });
 
   final String title;
   final String? subtitle;
 
+  /// Centre-align the title/subtitle (used on the auth screens).
+  final bool center;
+
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          center ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         Text(
           title,
+          textAlign: center ? TextAlign.center : TextAlign.start,
           style: const TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.w800,
@@ -30,6 +40,7 @@ class StepHeader extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             subtitle!,
+            textAlign: center ? TextAlign.center : TextAlign.start,
             style: const TextStyle(
               fontSize: 13.5,
               color: AppColors.textSecondary,
