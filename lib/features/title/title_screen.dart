@@ -11,13 +11,22 @@ import 'widgets/title_widgets.dart';
 class TitleScreen extends StatelessWidget {
   const TitleScreen({super.key});
 
+  /// How many recent applications to preview on the hub before "See all".
+  static const _previewCount = 3;
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: CustomScrollView(
+        body: AnimatedBuilder(
+          animation: titleStore,
+          builder: (context, _) {
+            final apps = [...titleStore.items]
+              ..sort((a, b) => b.submittedDate.compareTo(a.submittedDate));
+            final preview = apps.take(_previewCount).toList();
+            return CustomScrollView(
           slivers: [
             const ModuleHeroSliver(
               title: 'Title Services',
@@ -30,9 +39,12 @@ class TitleScreen extends StatelessWidget {
               iconRight: -18,
             ),
             ModuleHeroSheet(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const _EligibilityHubCard(),
+                  const SizedBox(height: 24),
                   const _SectionTitle('Choose a service'),
                   const SizedBox(height: 12),
                   for (final t in TitleServiceType.values) ...[
@@ -52,7 +64,7 @@ class TitleScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          '${mockTitleApplications.length}',
+                          '${apps.length}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -60,30 +72,155 @@ class TitleScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const Spacer(),
+                      if (apps.length > _previewCount)
+                        _SeeAllLink(
+                          onTap: () => context.push('/profile/applications'),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
+                  if (preview.isEmpty)
+                    const _EmptyHub(
+                      icon: 'assets/icons/base/locked.svg',
+                      message:
+                          'No applications yet.\nStart a service above to get going.',
+                    )
+                  else
+                    for (var i = 0; i < preview.length; i++) ...[
+                      ApplicationCard(app: preview[i]),
+                      if (i != preview.length - 1) const SizedBox(height: 12),
+                    ],
                 ],
               ),
             ),
-            if (mockTitleApplications.isEmpty)
-              const SliverToBoxAdapter(
-                child: _EmptyHub(
-                  icon: 'assets/icons/base/locked.svg',
-                  message:
-                      'No applications yet.\nStart a service above to get going.',
-                ),
-              )
-            else
-              SliverList.separated(
-                itemCount: mockTitleApplications.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16,
-                      i == mockTitleApplications.length - 1 ? 32 : 0),
-                  child: _ApplicationCard(app: mockTitleApplications[i]),
+          ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// "See all" link shown beside the applications header when there are more
+/// applications than the hub preview shows.
+class _SeeAllLink extends StatelessWidget {
+  const _SeeAllLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: const Row(
+        children: [
+          Text(
+            'See all',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+            ),
+          ),
+          SizedBox(width: 2),
+          Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.navy),
+        ],
+      ),
+    );
+  }
+}
+
+/// Free ownership-eligibility entry — the prominent top tier on the hub.
+class _EligibilityHubCard extends StatelessWidget {
+  const _EligibilityHubCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/title/eligibility'),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: AppColors.heroDiagonal,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.navy.withValues(alpha: 0.16),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Check Ownership Eligibility',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'FREE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Foreign-ownership rules · land vs. strata · in seconds.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.35,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                color: AppColors.gold,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/base/arrowright.svg',
+                  width: 15,
+                  height: 15,
+                  colorFilter:
+                      const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
                 ),
               ),
+            ),
           ],
         ),
       ),
@@ -140,16 +277,7 @@ class _ServiceCard extends StatelessWidget {
                       letterSpacing: -0.2,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    type.blurb,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       Text(
@@ -180,86 +308,6 @@ class _ServiceCard extends StatelessWidget {
               colorFilter: const ColorFilter.mode(
                   AppColors.textSecondary, BlendMode.srcIn),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ApplicationCard extends StatelessWidget {
-  const _ApplicationCard({required this.app});
-
-  final TitleApplication app;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/title/detail', extra: app),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: AppColors.cardShadow,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: SvgPicture.asset(
-                  app.type.asset,
-                  width: 22,
-                  height: 22,
-                  colorFilter: const ColorFilter.mode(
-                      AppColors.navyIcon, BlendMode.srcIn),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    app.type.label,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    app.address,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${app.refNo} · ${app.titleType}',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            TitleStatusBadge(status: app.status, compact: true),
           ],
         ),
       ),

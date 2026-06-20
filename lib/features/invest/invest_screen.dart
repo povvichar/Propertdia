@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/glass_icon_button.dart';
+import '../../shared/widgets/tier_badge.dart';
 import 'data/invest.dart';
 import 'widgets/invest_sheets.dart';
 import 'widgets/invest_widgets.dart';
@@ -16,7 +18,6 @@ class InvestScreen extends StatefulWidget {
 }
 
 class _InvestScreenState extends State<InvestScreen> {
-  int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -29,43 +30,80 @@ class _InvestScreenState extends State<InvestScreen> {
           child: AnimatedBuilder(
             animation: investStore,
             builder: (context, _) {
-              // Wallet is revealed only once the user is an investor; general and
-              // pending users see Invest | Loan.
-              final tabs = <({String label, Widget view})>[
-                (
-                  label: 'Invest',
-                  view:
-                      _InvestTab(onGoToWallet: () => setState(() => _tab = 1)),
-                ),
-                if (investStore.isInvestor)
-                  (label: 'Wallet', view: const _WalletTab()),
-                (label: 'Loan', view: const _LoanTab()),
-              ];
-              final index = _tab.clamp(0, tabs.length - 1);
+              // Single-purpose Invest hub. The wallet lives inside the Invest
+              // tab, and an investor's portfolio sits on its own screen behind
+              // the briefcase action in the top bar. (Loan is now its own
+              // top-level feature — see lib/features/loan.)
               return Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Column(
-                      children: [
-                        InvestTopBar(
-                          title: 'Invest & Loan',
-                          onBack: () => context.pop(),
-                        ),
-                        const SizedBox(height: 16),
-                        SegmentedTabs(
-                          labels: [for (final t in tabs) t.label],
-                          index: index,
-                          onChanged: (i) => setState(() => _tab = i),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                    child: InvestTopBar(
+                      title: 'Invest',
+                      onBack: () => context.pop(),
+                      trailing: investStore.isInvestor
+                          ? GlassIconButton(
+                              asset: 'assets/icons/base/suitcase.svg',
+                              onTap: () => context.push('/invest/portfolio'),
+                            )
+                          : null,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  const Expanded(child: _InvestTab()),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── My Portfolio (own screen, reached from the briefcase action) ─────────────
+
+class PortfolioScreen extends StatelessWidget {
+  const PortfolioScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          bottom: false,
+          child: AnimatedBuilder(
+            animation: investStore,
+            builder: (context, _) {
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: InvestTopBar(
+                      title: 'My Portfolio',
+                      onBack: () => context.pop(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Expanded(
-                    child: IndexedStack(
-                      index: index,
-                      children: [for (final t in tabs) t.view],
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                      children: [
+                        const _TierCard(),
+                        const SizedBox(height: 16),
+                        const _PortfolioCard(),
+                        if (investStore.holdings.isNotEmpty) ...[
+                          const SizedBox(height: 22),
+                          const SectionTitle('My investments'),
+                          const SizedBox(height: 12),
+                          for (final h in investStore.holdings) ...[
+                            _HoldingCard(holding: h),
+                            const SizedBox(height: 12),
+                          ],
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -78,12 +116,266 @@ class _InvestScreenState extends State<InvestScreen> {
   }
 }
 
+// ── Transaction history (own screen, reached from the wallet card) ───────────
+
+class TransactionsScreen extends StatelessWidget {
+  const TransactionsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          bottom: false,
+          child: AnimatedBuilder(
+            animation: investStore,
+            builder: (context, _) {
+              final txns = investStore.transactions;
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: InvestTopBar(
+                      title: 'Transaction history',
+                      onBack: () => context.pop(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                      children: [
+                        if (txns.isEmpty)
+                          const _WalletEmpty()
+                        else
+                          for (final t in txns) _TxnRow(txn: t),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Membership-tier hub shown atop the portfolio: current rank, its perks and
+/// progress toward the next rank.
+class _TierCard extends StatelessWidget {
+  const _TierCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final tier = investStore.tier;
+    final access = switch (tier) {
+      InvestorTier.silver => 'Standard',
+      InvestorTier.gold => 'Early access',
+      InvestorTier.platinum => 'Priority access',
+    };
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              TierBadge(tier),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => showTierInfoSheet(context),
+                behavior: HitTestBehavior.opaque,
+                child: const Icon(Icons.info_outline_rounded,
+                    size: 18, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _PerkRow(
+            icon: 'assets/icons/base/dollar_square.svg',
+            label: 'Per-deal limit',
+            value: tier.maxInvestLabel,
+          ),
+          const SizedBox(height: 12),
+          _PerkRow(
+            icon: 'assets/icons/base/clock.svg',
+            label: 'Deal access',
+            value: access,
+          ),
+          if (investStore.nextTier != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Invest ${usd(investStore.nextTierRemaining)} more to reach ${investStore.nextTier!.label}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: investStore.tierProgress,
+                minHeight: 6,
+                backgroundColor: AppColors.surfaceMuted,
+                valueColor: AlwaysStoppedAnimation(investStore.nextTier!.color),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PerkRow extends StatelessWidget {
+  const _PerkRow({required this.icon, required this.label, required this.value});
+
+  final String icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: SvgPicture.asset(
+              icon,
+              width: 17,
+              height: 17,
+              colorFilter:
+                  const ColorFilter.mode(AppColors.navyIcon, BlendMode.srcIn),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13.5,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── All opportunities (own screen, reached from "See all") ───────────────────
+
+class OpportunitiesScreen extends StatelessWidget {
+  const OpportunitiesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          bottom: false,
+          child: AnimatedBuilder(
+            animation: investStore,
+            builder: (context, _) {
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: InvestTopBar(
+                      title: 'Opportunities',
+                      onBack: () => context.pop(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                      itemCount: mockProjects.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, i) => ProjectListItem(
+                        project: mockProjects[i],
+                        onTap: () => context.push('/invest/detail',
+                            extra: mockProjects[i]),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SeeAllButton extends StatelessWidget {
+  const _SeeAllButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'See all',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: AppColors.navy,
+            ),
+          ),
+          const SizedBox(width: 3),
+          SvgPicture.asset(
+            'assets/icons/base/arrowright.svg',
+            width: 14,
+            height: 14,
+            colorFilter:
+                const ColorFilter.mode(AppColors.navy, BlendMode.srcIn),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Tab 1 · Invest ───────────────────────────────────────────────────────────
 
 class _InvestTab extends StatelessWidget {
-  const _InvestTab({required this.onGoToWallet});
-
-  final VoidCallback onGoToWallet;
+  const _InvestTab();
 
   @override
   Widget build(BuildContext context) {
@@ -92,38 +384,44 @@ class _InvestTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
-        if (membership == MembershipStatus.none)
-          const _MembershipCard()
-        else if (membership == MembershipStatus.pending)
-          const _PendingReviewCard()
-        else
-          _InvestorStatusCard(onAddFunds: onGoToWallet),
-        const SizedBox(height: 20),
+        // Active investors see a single wallet card (which carries the
+        // Investor Club badge); non-members see the join card; pending
+        // members see the review card.
         if (investor) ...[
-          _PortfolioCard(onGoToWallet: onGoToWallet),
+          _BalanceCard(
+            balance: investStore.balance,
+            onDeposit: () => runDeposit(context),
+            onWithdraw: () => runWithdraw(context),
+          ),
           const SizedBox(height: 22),
-          if (investStore.holdings.isNotEmpty) ...[
-            const SectionTitle('My investments'),
-            const SizedBox(height: 12),
-            for (final h in investStore.holdings) ...[
-              _HoldingCard(holding: h),
-              const SizedBox(height: 12),
-            ],
-            const SizedBox(height: 10),
-          ],
+        ] else if (membership == MembershipStatus.pending) ...[
+          const _PendingReviewCard(),
+          const SizedBox(height: 20),
+        ] else ...[
+          const _MembershipCard(),
+          const SizedBox(height: 20),
         ],
-        const SectionTitle('Open opportunities'),
+        SectionTitle(
+          'Open opportunities',
+          trailing: _SeeAllButton(
+            onTap: () => context.push('/invest/opportunities'),
+          ),
+        ),
         const SizedBox(height: 14),
-        for (var i = 0; i < mockProjects.length; i++) ...[
+        // Preview the first few; the full catalogue lives behind "See all".
+        for (var i = 0; i < _previewCount; i++) ...[
           ProjectCard(
             project: mockProjects[i],
             onTap: () => context.push('/invest/detail', extra: mockProjects[i]),
           ),
-          if (i != mockProjects.length - 1) const SizedBox(height: 14),
+          if (i != _previewCount - 1) const SizedBox(height: 14),
         ],
       ],
     );
   }
+
+  int get _previewCount =>
+      mockProjects.length < 3 ? mockProjects.length : 3;
 }
 
 class _MembershipCard extends StatelessWidget {
@@ -208,8 +506,8 @@ class _MembershipCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _GoldButton(
-            label: 'Request Membership',
-            onTap: () => showMembershipSheet(context),
+            label: 'Apply for Membership',
+            onTap: () => context.push('/invest/apply'),
           ),
         ],
       ),
@@ -223,175 +521,104 @@ class _PendingReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(13),
+    return GestureDetector(
+      // Demo control: long-press simulates an admin approving the request.
+      // (Membership otherwise stays pending — there is no auto-approval.)
+      onLongPress: () {
+        investStore.approveMembership();
+        investToast(context, 'Membership approved — welcome to the club');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: AppColors.navyDepth,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.navy.withValues(alpha: 0.25),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
-            child: Center(
-              child: SvgPicture.asset(
-                'assets/icons/base/clock.svg',
-                width: 24,
-                height: 24,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Application under review',
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Our team is verifying your request. You can invest once approved.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Compact status card shown once the user is an active investor.
-class _InvestorStatusCard extends StatelessWidget {
-  const _InvestorStatusCard({required this.onAddFunds});
-
-  final VoidCallback onAddFunds;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Center(
-              child: SvgPicture.asset(
-                'assets/icons/base/medal.svg',
-                width: 24,
-                height: 24,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Active Investor',
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    SvgPicture.asset(
-                      'assets/icons/base/check_circle.svg',
-                      width: 15,
-                      height: 15,
-                      colorFilter: const ColorFilter.mode(
-                          AppColors.gold, BlendMode.srcIn),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Investor Club member · wallet active',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onAddFunds,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
-                color: AppColors.gold,
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.gold.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(13),
               ),
-              child: const Text(
-                'Add funds',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/base/clock.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter:
+                      const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Flexible(
+                        child: Text(
+                          'Application under review',
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'PENDING',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.gold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Our team is verifying your request. You can invest once approved.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.7),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _PortfolioCard extends StatelessWidget {
-  const _PortfolioCard({required this.onGoToWallet});
-
-  final VoidCallback onGoToWallet;
+  const _PortfolioCard();
 
   @override
   Widget build(BuildContext context) {
@@ -451,11 +678,11 @@ class _PortfolioCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 GestureDetector(
-                  onTap: onGoToWallet,
+                  onTap: () => runDeposit(context),
                   child: Row(
                     children: [
                       const Text(
-                        'Go to wallet',
+                        'Deposit funds',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
@@ -626,33 +853,7 @@ class _GoldButton extends StatelessWidget {
   }
 }
 
-// ── Tab 2 · Wallet ───────────────────────────────────────────────────────────
-
-class _WalletTab extends StatelessWidget {
-  const _WalletTab();
-
-  @override
-  Widget build(BuildContext context) {
-    final txns = investStore.transactions;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-      children: [
-        _BalanceCard(
-          balance: investStore.balance,
-          onDeposit: () => runDeposit(context),
-          onWithdraw: () => runWithdraw(context),
-        ),
-        const SizedBox(height: 22),
-        const SectionTitle('Transaction history'),
-        const SizedBox(height: 6),
-        if (txns.isEmpty)
-          const _WalletEmpty()
-        else
-          for (final t in txns) _TxnRow(txn: t),
-      ],
-    );
-  }
-}
+// ── Wallet balance + transactions (reused on Invest tab & Portfolio) ─────────
 
 class _BalanceCard extends StatelessWidget {
   const _BalanceCard({
@@ -683,6 +884,52 @@ class _BalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              TierBadge(investStore.tier, onDark: true),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => context.push('/invest/transactions'),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/icons/base/history.svg',
+                      width: 16,
+                      height: 16,
+                      colorFilter: ColorFilter.mode(
+                          Colors.white.withValues(alpha: 0.85), BlendMode.srcIn),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => showTierInfoSheet(context),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 17,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               SvgPicture.asset(
@@ -721,6 +968,27 @@ class _BalanceCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.6),
             ),
           ),
+          if (investStore.nextTier != null) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Invest ${usd(investStore.nextTierRemaining)} more to reach ${investStore.nextTier!.label}',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: investStore.tierProgress,
+                minHeight: 6,
+                backgroundColor: Colors.white.withValues(alpha: 0.14),
+                valueColor: AlwaysStoppedAnimation(investStore.nextTier!.color),
+              ),
+            ),
+          ],
           const SizedBox(height: 18),
           Row(
             children: [
@@ -934,607 +1202,6 @@ class _TxnRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Tab 3 · Loan ─────────────────────────────────────────────────────────────
-
-class _LoanTab extends StatefulWidget {
-  const _LoanTab();
-
-  @override
-  State<_LoanTab> createState() => _LoanTabState();
-}
-
-class _LoanTabState extends State<_LoanTab> {
-  final _amountCtrl = TextEditingController(text: '120,000');
-  double _amount = 120000;
-  int _years = 15;
-  int _bankIndex = 0;
-
-  BankLoan get _bank => mockBanks[_bankIndex];
-
-  double get _monthly => monthlyRepayment(
-        principal: _amount,
-        annualRatePct: _bank.annualRate,
-        years: _years,
-      );
-
-  double get _totalPayable => _monthly * _years * 12;
-
-  void _onTyped(String v) {
-    final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
-    final parsed = (int.tryParse(digits) ?? 0).clamp(0, kLoanMax).toDouble();
-    setState(() => _amount = parsed);
-  }
-
-  void _onSlider(double v) {
-    setState(() => _amount = v);
-    final formatted = _grouped(v.round());
-    _amountCtrl.value = TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-
-  @override
-  void dispose() {
-    _amountCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final canApply = _amount >= kLoanMin;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-      children: [
-        _CalculatorCard(
-          amountCtrl: _amountCtrl,
-          amount: _amount,
-          years: _years,
-          monthly: _monthly,
-          totalPayable: _totalPayable,
-          rate: _bank.annualRate,
-          onTyped: _onTyped,
-          onSlider: _onSlider,
-          onYears: (v) => setState(() => _years = v),
-        ),
-        const SizedBox(height: 22),
-        const SectionTitle('Compare local banks'),
-        const SizedBox(height: 6),
-        for (var i = 0; i < mockBanks.length; i++)
-          _BankRow(
-            bank: mockBanks[i],
-            selected: i == _bankIndex,
-            monthly: monthlyRepayment(
-              principal: _amount,
-              annualRatePct: mockBanks[i].annualRate,
-              years: _years,
-            ),
-            onTap: () => setState(() => _bankIndex = i),
-          ),
-        const SizedBox(height: 20),
-        _GoldButton(
-          label:
-              canApply ? 'Apply with ${_bank.name}' : 'Enter ${usd(kLoanMin)}+',
-          onTap: () {
-            if (!canApply) {
-              investToast(context, 'Minimum loan is ${usd(kLoanMin)}');
-              return;
-            }
-            runLoanApply(
-              context,
-              bank: _bank,
-              amount: _amount.round(),
-              years: _years,
-              monthly: _monthly,
-            );
-          },
-        ),
-        const SizedBox(height: 10),
-        Center(
-          child: Text(
-            'Indicative only · final terms set by the bank',
-            style: TextStyle(
-              fontSize: 11.5,
-              color: AppColors.textSecondary.withValues(alpha: 0.9),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CalculatorCard extends StatelessWidget {
-  const _CalculatorCard({
-    required this.amountCtrl,
-    required this.amount,
-    required this.years,
-    required this.monthly,
-    required this.totalPayable,
-    required this.rate,
-    required this.onTyped,
-    required this.onSlider,
-    required this.onYears,
-  });
-
-  final TextEditingController amountCtrl;
-  final double amount;
-  final int years;
-  final double monthly;
-  final double totalPayable;
-  final double rate;
-  final ValueChanged<String> onTyped;
-  final ValueChanged<double> onSlider;
-  final ValueChanged<int> onYears;
-
-  static const _tenures = [5, 10, 15, 20, 25, 30];
-  static const _capStyle = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textSecondary,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // ── Result hero ──────────────────────────────────────────────────
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-          decoration: BoxDecoration(
-            gradient: AppColors.navyDepth,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.navy.withValues(alpha: 0.25),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Text(
-                'Estimated monthly repayment',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    usd(monthly),
-                    style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -1.0,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '/mo',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(height: 1, color: Colors.white.withValues(alpha: 0.12)),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _HeroStat(
-                        label: 'Total payable', value: usd(totalPayable)),
-                  ),
-                  _heroDivider(),
-                  Expanded(
-                      child: _HeroStat(label: 'Term', value: '$years yrs')),
-                  _heroDivider(),
-                  Expanded(
-                    child: _HeroStat(
-                        label: 'Interest',
-                        value: '${rate.toStringAsFixed(1)}%'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-
-        // ── Controls ─────────────────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: AppColors.cardShadow,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Loan amount
-              Row(
-                children: [
-                  const Text(
-                    'Loan amount',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'USD',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    const Text(
-                      '\$',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: amountCtrl,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(7),
-                          _ThousandsInputFormatter(),
-                        ],
-                        onChanged: onTyped,
-                        cursorColor: AppColors.gold,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.3,
-                        ),
-                        decoration: const InputDecoration(
-                          isCollapsed: true,
-                          border: InputBorder.none,
-                          hintText: '0',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _ThinSlider(
-                value: amount.clamp(kLoanMin.toDouble(), kLoanMax.toDouble()),
-                min: kLoanMin.toDouble(),
-                max: kLoanMax.toDouble(),
-                onChanged: onSlider,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(usd(kLoanMin), style: _capStyle),
-                    Text(usd(kLoanMax), style: _capStyle),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Tenure
-              Row(
-                children: [
-                  const Text(
-                    'Tenure',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '$years years',
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  for (final t in _tenures) ...[
-                    Expanded(
-                      child: _TenureChip(
-                        years: t,
-                        selected: t == years,
-                        onTap: () => onYears(t),
-                      ),
-                    ),
-                    if (t != _tenures.last) const SizedBox(width: 8),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  static Widget _heroDivider() => Container(
-        width: 1,
-        height: 26,
-        color: Colors.white.withValues(alpha: 0.12),
-      );
-}
-
-/// One labelled stat inside the loan result hero.
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            letterSpacing: -0.3,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.6),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Quick-select tenure chip (common mortgage terms).
-class _TenureChip extends StatelessWidget {
-  const _TenureChip({
-    required this.years,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final int years;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? AppColors.navy : AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? AppColors.navy : AppColors.border,
-          ),
-        ),
-        child: Text(
-          '${years}y',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            color: selected ? Colors.white : AppColors.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// `1234567` → `1,234,567` for an integer.
-String _grouped(int v) {
-  final s = v.toString();
-  final b = StringBuffer();
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-    b.write(s[i]);
-  }
-  return b.toString();
-}
-
-/// Live thousands-grouping for the loan-amount text field.
-class _ThousandsInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) return const TextEditingValue();
-    final formatted = _grouped(int.parse(digits));
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-}
-
-class _ThinSlider extends StatelessWidget {
-  const _ThinSlider({
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliderTheme(
-      data: SliderTheme.of(context).copyWith(
-        trackHeight: 4,
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
-        activeTrackColor: AppColors.gold,
-        inactiveTrackColor: AppColors.iconTile,
-        thumbColor: AppColors.gold,
-      ),
-      child: Slider(
-        value: value,
-        min: min,
-        max: max,
-        onChanged: onChanged,
-      ),
-    );
-  }
-}
-
-class _BankRow extends StatelessWidget {
-  const _BankRow({
-    required this.bank,
-    required this.selected,
-    required this.monthly,
-    required this.onTap,
-  });
-
-  final BankLoan bank;
-  final bool selected;
-  final double monthly;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        margin: const EdgeInsets.only(top: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? AppColors.gold : Colors.transparent,
-            width: 1.5,
-          ),
-          boxShadow: AppColors.cardShadow,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: SvgPicture.asset(bank.logo, fit: BoxFit.contain),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    bank.name,
-                    style: const TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${bank.annualRate.toStringAsFixed(1)}% p.a. · up to ${bank.maxTenureYears}y · ${bank.maxLtv}% LTV',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  usd(monthly),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.navy,
-                  ),
-                ),
-                const Text(
-                  '/month',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -73,10 +73,13 @@ tokens.
 ### Reusable patterns to prefer over reinventing
 
 - **Collapsing hero header** — `shared/widgets/module_hero_sliver.dart`
-  (`ModuleHeroSliver` + `ModuleHeroSheet`): navy gradient `SliverAppBar` that collapses
-  to a pinned bar, used by Estimate / Title / Partnership. Note: it sets `stretch: true`
-  and intentionally has **no `shape`** (a `shape` lets the navy bg bleed into the corner
-  notches). Reuse it for any new module landing screen.
+  (`ModuleHeroSliver` + `ModuleHeroSheet`): a full-bleed navy gradient `SliverAppBar`
+  (runs edge to edge and under the status bar, light status-bar icons, **flat bottom**)
+  that collapses to a pinned compact bar, used by Estimate / Title / Partnership / About.
+  The curve lives on the content: `ModuleHeroSheet` is a light sheet with **rounded top
+  corners and the navy header colour filling the corner notches**, so it appears to curve
+  up out of the header (the iOS "sheet rising into the header" look). Reuse for any new
+  module landing screen.
 - **Multi-step wizards** — `valuation_wizard_screen.dart`, `title_request_wizard_screen.dart`
   with `shared/widgets/wizard_header.dart` + `wizard_bottom_bar.dart`. Gotcha: the
   `PageView` eagerly builds all steps, so **null-guard draft fields** that aren't filled
@@ -93,9 +96,12 @@ tokens.
 - Brand: gold `#F2A71B` / secondary `#E4A623`, navy primary `#0B113E` /`#1E2A47`,
   background `#F1F3F8`; success `#0F973D`, warning `#F3A218`, error `#EF4444`,
   info `#0088FF`.
-- Font is **Manrope** via `google_fonts`, applied globally in `AppTheme.light`
-  (`GoogleFonts.manropeTextTheme`); use `GoogleFonts.manrope(...)` for overrides.
-  (The README's mention of "Inter" is stale.)
+- Font is **Manrope** (Latin) with a **Kantumruy Pro** fallback for Khmer codepoints,
+  both via `google_fonts` (loaded at runtime, no bundled `.ttf` assets). Applied globally
+  in `AppTheme.light` (`GoogleFonts.manropeTextTheme` + `fontFamilyFallback`); the
+  `kFontFamily` / `kFontFamilyFallback` constants and `AppTextStyles` in
+  `core/theme/app_text_styles.dart` wrap this. Use `GoogleFonts.manrope(...)` for
+  overrides. (The README's mention of "Inter" is stale.)
 - Lints enforce `prefer_const_constructors` and
   `prefer_const_literals_to_create_immutables` (see `analysis_options.yaml`) — keep
   widget trees `const` where possible.

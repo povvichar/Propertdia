@@ -342,52 +342,10 @@ class _ProjectList extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
       itemCount: projects.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
-      itemBuilder: (context, i) => Stack(
-        children: [
-          ProjectCard(
-            project: projects[i],
-            onTap: () => context.push('/invest/detail', extra: projects[i]),
-          ),
-          Positioned(
-            top: 16,
-            right: 16,
-            child: _UnsaveButton(
-              onTap: () => favoritesStore.toggleProject(projects[i]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UnsaveButton extends StatelessWidget {
-  const _UnsaveButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: AppColors.cardShadow,
-        ),
-        child: Center(
-          child: SvgPicture.asset(
-            'assets/icons/base/heart_fill.svg',
-            width: 18,
-            height: 18,
-            colorFilter:
-                const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
-          ),
-        ),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, i) => ProjectListItem(
+        project: projects[i],
+        onTap: () => context.push('/invest/detail', extra: projects[i]),
       ),
     );
   }

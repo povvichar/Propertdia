@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/utils/l10n_ext.dart';
 import '../../../shared/widgets/app_search_bar.dart';
 
 /// Light header: location selector on the left, quick actions on the right,
@@ -26,9 +27,9 @@ class HomeHeader extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Text(
-                            'Current Location',
-                            style: TextStyle(
+                          Text(
+                            context.l10n.homeCurrentLocation,
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 11,
                             ),
@@ -57,15 +58,19 @@ class HomeHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Center(
-                    child: Image.asset(
-                      'assets/images/logo_mark.png',
-                      width: 24,
-                      height: 24,
-                      color: AppColors.gold,
+                GestureDetector(
+                  onTap: () => context.push('/about'),
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/logo_mark.png',
+                        width: 24,
+                        height: 24,
+                        color: AppColors.gold,
+                      ),
                     ),
                   ),
                 ),
@@ -73,7 +78,7 @@ class HomeHeader extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const AppSearchBar(hint: 'Search condo, borey, land...'),
+            AppSearchBar(hint: context.l10n.homeSearchHint),
           ],
         ),
       ),

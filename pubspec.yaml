@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   flutter_riverpod: ^2.5.1
   flutter_svg: ^2.0.10
   go_router: ^14.2.0
@@ -23,7 +26,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/images/
+    - assets/images/partners/
+    - assets/images/team/
     - assets/icons/home/
     - assets/icons/base/
+  # Fonts (Manrope + Kantumruy Pro) are loaded at runtime via the google_fonts
+  # package — see lib/core/theme/app_text_styles.dart. No bundled font assets.

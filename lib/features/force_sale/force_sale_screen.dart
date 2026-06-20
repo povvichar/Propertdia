@@ -71,15 +71,19 @@ class _ForceSaleScreenState extends State<ForceSaleScreen> {
                             onSelect: (t) => setState(() => _quickType = t),
                           ),
                           const SizedBox(height: 20),
-                          Text(
-                            _savedOnly
-                                ? '${list.length} saved'
-                                : '${list.length} opportunities',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                _savedOnly
+                                    ? '${list.length} saved'
+                                    : '${list.length} opportunities',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                         ],

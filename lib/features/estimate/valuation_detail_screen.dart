@@ -41,9 +41,15 @@ class ValuationDetailScreen extends StatelessWidget {
               _TopBar(status: v.status),
               const SizedBox(height: 16),
               _SummaryCard(valuation: v),
-              if (v.hasValue) ...[
+              if (v.hasEstimate) ...[
                 const SizedBox(height: 14),
-                _ValueCard(valuation: v),
+                EstimateRangeCard(
+                  value: v.estimatedValue!,
+                  low: v.valueLow,
+                  high: v.valueHigh,
+                  comparables: v.comparables,
+                  certified: v.hasValue,
+                ),
               ],
               const SizedBox(height: 14),
               _Card(
@@ -63,7 +69,7 @@ class ValuationDetailScreen extends StatelessWidget {
                   label: 'Re-submit request',
                   onPressed: () => context.pushReplacement(
                     '/estimate/new',
-                    extra: v.type,
+                    extra: EstimatePrefill(type: v.type),
                   ),
                 ),
               if (v.status == ValuationStatus.completed ||
@@ -279,85 +285,6 @@ class _Fact extends StatelessWidget {
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ValueCard extends StatelessWidget {
-  const _ValueCard({required this.valuation});
-
-  final Valuation valuation;
-
-  @override
-  Widget build(BuildContext context) {
-    final v = valuation;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.25),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Estimated market value',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
-              const Spacer(),
-              SvgPicture.asset(
-                'assets/icons/base/scale.svg',
-                width: 18,
-                height: 18,
-                colorFilter:
-                    const ColorFilter.mode(AppColors.gold, BlendMode.srcIn),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            usd(v.estimatedValue!),
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -1,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 10),
-          if (v.valueLow != null && v.valueHigh != null)
-            Text(
-              'Range ${usd(v.valueLow!)} – ${usd(v.valueHigh!)}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.gold.withValues(alpha: 0.95),
-              ),
-            ),
-          const SizedBox(height: 4),
-          Text(
-            'Based on ${v.comparables} comparable properties',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.65),
             ),
           ),
         ],

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/list_filter.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../auth/data/account.dart';
+import '../title/data/title_service.dart';
+import '../title/widgets/title_widgets.dart';
 
 // ── Shared scaffold ───────────────────────────────────────────────────────────
 
@@ -427,22 +430,142 @@ class TransactionHistoryScreen extends StatelessWidget {
 
 // ── Application History ───────────────────────────────────────────────────────
 
-class ApplicationHistoryScreen extends StatelessWidget {
+class ApplicationHistoryScreen extends StatefulWidget {
   const ApplicationHistoryScreen({super.key});
 
   @override
+  State<ApplicationHistoryScreen> createState() =>
+      _ApplicationHistoryScreenState();
+}
+
+class _ApplicationHistoryScreenState extends State<ApplicationHistoryScreen> {
+  TitleStatus? _filter;
+  String _query = '';
+  final _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const _Screen(
-      title: 'Application History',
-      child: _EmptyState(
-        icon: 'assets/icons/base/document.svg',
-        title: 'No applications yet',
-        blurb:
-            'Title, valuation and loan applications will be listed here.',
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leadingWidth: 48,
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: const Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Icon(Icons.arrow_back_ios_new_rounded,
+                size: 18, color: AppColors.navy),
+          ),
+        ),
+        title: const Text(
+          'Application History',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
+        centerTitle: false,
+      ),
+      body: SafeArea(
+        top: false,
+        child: AnimatedBuilder(
+          animation: titleStore,
+          builder: (context, _) {
+            final all = [...titleStore.items]
+              ..sort((a, b) => b.submittedDate.compareTo(a.submittedDate));
+            final q = _query.trim().toLowerCase();
+            final filtered = all.where((a) {
+              if (_filter != null && a.status != _filter) return false;
+              if (q.isEmpty) return true;
+              return a.refNo.toLowerCase().contains(q) ||
+                  a.address.toLowerCase().contains(q) ||
+                  a.type.label.toLowerCase().contains(q) ||
+                  a.applicantName.toLowerCase().contains(q) ||
+                  a.province.toLowerCase().contains(q);
+            }).toList();
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: SearchFilterBar(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _query = v),
+                    hint: 'Search ref no, address, type…',
+                    filterActive: _filter != null,
+                    onFilter: all.isEmpty
+                        ? null
+                        : () => showTitleStatusFilter(
+                              context,
+                              selected: _filter,
+                              apps: all,
+                              onSelect: (s) => setState(() => _filter = s),
+                            ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${filtered.length} application${filtered.length == 1 ? '' : 's'}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_filter != null)
+                        ActiveFilterChip(
+                          label: _filter!.label,
+                          color: _filter!.color,
+                          onClear: () => setState(() => _filter = null),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? _EmptyState(
+                          icon: 'assets/icons/base/document.svg',
+                          title:
+                              all.isEmpty ? 'No applications yet' : 'No matches',
+                          blurb: all.isEmpty
+                              ? 'Title, valuation and loan applications will be listed here.'
+                              : 'Try a different search or status filter.',
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, i) =>
+                              ApplicationCard(app: filtered[i]),
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 }
+
 
 // ── Saved Drafts ──────────────────────────────────────────────────────────────
 
@@ -471,7 +594,7 @@ class TelegramSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Screen(
-      title: 'Telegram Support',
+      title: 'Help & Support',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

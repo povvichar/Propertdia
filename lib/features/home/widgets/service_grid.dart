@@ -3,35 +3,38 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/utils/l10n_ext.dart';
 
 class _Service {
-  const _Service(this.asset, this.label, {this.multiColor = false, this.route});
+  const _Service(this.asset, this.label, {this.route});
 
   final String asset;
   final String label;
-  final bool multiColor;
   final String? route;
 }
 
-const _services = [
-  _Service('assets/icons/home/map_price.svg', 'Map Price', route: '/map-price'),
-  _Service('assets/icons/home/property_estimate.svg', 'Estimate',
-      route: '/estimate'),
-  _Service('assets/icons/home/title_services.svg', 'Title Services',
-      route: '/title'),
-  _Service('assets/icons/home/force_sale.svg', 'Force Sale',
-      route: '/force-sale'),
-  _Service('assets/icons/home/invest_loan.svg', 'Invest & Loan',
-      route: '/invest'),
-  _Service('assets/icons/home/partnership.svg', 'Partnership',
-      multiColor: true, route: '/partnership'),
-];
+List<_Service> _servicesFor(AppLocalizations l) => [
+      _Service('assets/icons/home/map_price.svg', l.moduleMapPrice,
+          route: '/map-price'),
+      _Service('assets/icons/home/property_estimate.svg', l.moduleEstimate,
+          route: '/estimate'),
+      _Service('assets/icons/home/title_services.svg', l.moduleTitle,
+          route: '/title'),
+      _Service('assets/icons/home/force_sale.svg', l.moduleForceSale,
+          route: '/force-sale'),
+      _Service('assets/icons/base/money-bag.svg', l.moduleInvest,
+          route: '/invest'),
+      _Service('assets/icons/home/invest_loan.svg', l.moduleLoan,
+          route: '/loan'),
+    ];
 
 class ServiceGrid extends StatelessWidget {
   const ServiceGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final services = _servicesFor(context.l10n);
     return GridView.builder(
       shrinkWrap: true,
       padding: EdgeInsets.zero,
@@ -42,8 +45,8 @@ class ServiceGrid extends StatelessWidget {
         crossAxisSpacing: 10,
         mainAxisExtent: 78,
       ),
-      itemCount: _services.length,
-      itemBuilder: (context, i) => _ServiceTile(service: _services[i]),
+      itemCount: services.length,
+      itemBuilder: (context, i) => _ServiceTile(service: services[i]),
     );
   }
 }
@@ -85,24 +88,15 @@ class _ServiceTileState extends State<_ServiceTile> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              widget.service.multiColor
-                  ? Opacity(
-                      opacity: _pressed ? 0.6 : 1.0,
-                      child: SvgPicture.asset(
-                        widget.service.asset,
-                        width: 24,
-                        height: 24,
-                      ),
-                    )
-                  : SvgPicture.asset(
-                      widget.service.asset,
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(
-                        _pressed ? AppColors.gold : AppColors.navyIcon,
-                        BlendMode.srcIn,
-                      ),
-                    ),
+              SvgPicture.asset(
+                widget.service.asset,
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  _pressed ? AppColors.gold : AppColors.navyIcon,
+                  BlendMode.srcIn,
+                ),
+              ),
               const SizedBox(height: 6),
               Text(
                 widget.service.label,

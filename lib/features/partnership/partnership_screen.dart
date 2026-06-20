@@ -9,7 +9,10 @@ import '../../shared/widgets/module_hero_sliver.dart';
 import 'data/partnership.dart';
 
 class PartnershipScreen extends StatelessWidget {
-  const PartnershipScreen({super.key});
+  const PartnershipScreen({super.key, this.showBack = true});
+
+  /// Hide the header back button when shown as a top-level nav tab.
+  final bool showBack;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,7 @@ class PartnershipScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         body: CustomScrollView(
           slivers: [
-            const ModuleHeroSliver(
+            ModuleHeroSliver(
               title: 'Partnership',
               headline: 'Trusted Partner ecosystem',
               subtitle:
@@ -31,6 +34,7 @@ class PartnershipScreen extends StatelessWidget {
               iconSize: 176,
               iconTop: 10,
               iconRight: -20,
+              showBack: showBack,
             ),
             ModuleHeroSheet(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
@@ -213,7 +217,8 @@ class _PartnerCardState extends State<_PartnerCard> {
   }
 }
 
-/// Renders a real SVG logo on a clean tile, or a branded monogram fallback.
+/// Renders a real logo (SVG or PNG) on a clean tile, or a branded monogram
+/// fallback when no logo asset is supplied.
 class PartnerLogo extends StatelessWidget {
   const PartnerLogo({super.key, required this.partner, this.size = 46});
 
@@ -222,16 +227,22 @@ class PartnerLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (partner.logoAsset != null) {
+    final asset = partner.logoAsset;
+    if (asset != null) {
+      final isSvg = asset.toLowerCase().endsWith('.svg');
       return Container(
         width: size,
         height: size,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
+          // Raster logos often carry their own background, so sit them on
+          // white for crispness; SVG marks keep the muted tile.
+          color: isSvg ? AppColors.surfaceMuted : Colors.white,
           borderRadius: BorderRadius.circular(13),
         ),
-        child: SvgPicture.asset(partner.logoAsset!, fit: BoxFit.contain),
+        child: isSvg
+            ? SvgPicture.asset(asset, fit: BoxFit.contain)
+            : Image.asset(asset, fit: BoxFit.contain),
       );
     }
     return Container(

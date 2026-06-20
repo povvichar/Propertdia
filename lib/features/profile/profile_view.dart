@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/providers/app_providers.dart';
+import '../../shared/utils/l10n_ext.dart';
 import '../../shared/widgets/primary_button.dart';
+import '../../shared/widgets/tier_badge.dart';
 import '../auth/data/account.dart';
 import '../invest/data/invest.dart';
 import 'widgets/profile_sheets.dart' show showLanguage;
@@ -15,8 +18,8 @@ class ProfileView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SafeArea(
-      bottom: false,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
       child: AnimatedBuilder(
         animation: session,
         builder: (context, _) => session.isGuest
@@ -35,76 +38,50 @@ class _GuestView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 120),
+      padding: EdgeInsets.zero,
       children: [
-        Center(
-          child: Container(
-            width: 84,
-            height: 84,
-            decoration: const BoxDecoration(
-              gradient: AppColors.navyDepth,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: SvgPicture.asset(
-                'assets/icons/base/profile.svg',
-                width: 40,
-                height: 40,
-                colorFilter:
-                    const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+        _ProfileHero(
+          avatar: SvgPicture.asset(
+            'assets/icons/base/profile.svg',
+            width: 44,
+            height: 44,
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+          avatarColor: AppColors.navy,
+          name: context.l10n.profileGuestTitle,
+          subtitle: context.l10n.profileGuestSubtitle,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 120),
+          child: Column(
+            children: [
+              PrimaryButton(
+                label: context.l10n.actionLogIn,
+                trailingIcon: null,
+                onPressed: () => context.push('/login'),
               ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        const Center(
-          child: Text(
-            "You're browsing as a guest",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Center(
-          child: Text(
-            'Log in to save favorites, invest in projects\nand manage your wallet.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: AppColors.textSecondary.withValues(alpha: 0.95),
-            ),
-          ),
-        ),
-        const SizedBox(height: 26),
-        PrimaryButton(
-          label: 'Log in',
-          trailingIcon: null,
-          onPressed: () => context.push('/login'),
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: () => context.push('/register'),
-          child: Container(
-            height: 48,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Text(
-              'Create account',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppColors.navy,
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () => context.push('/register'),
+                child: Container(
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    context.l10n.profileCreateAccount,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ],
@@ -123,62 +100,82 @@ class _SignedInView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+      padding: EdgeInsets.zero,
       children: [
-        _Header(account: account),
-        const SizedBox(height: 20),
-
-        const _GroupLabel('Account'),
+        _ProfileHero(
+          avatar: Text(
+            account.initials,
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: AppColors.navy,
+            ),
+          ),
+          avatarColor: AppColors.gold,
+          name: account.name,
+          role: account.role,
+          subtitle: account.email,
+          badge: account.investor
+              ? TierBadge(investStore.tier, compact: true)
+              : null,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _GroupLabel(context.l10n.profileGroupAccount),
         _Group([
           _Row(
             icon: 'assets/icons/base/profile.svg',
-            label: 'Personal Information',
+            label: context.l10n.profilePersonalInfo,
             onTap: () => context.push('/profile/personal'),
           ),
           _Row(
             icon: 'assets/icons/base/shield_user.svg',
-            label: 'Identity Verification',
-            trailing: const _StatusChip('Not verified', AppColors.gold),
+            label: context.l10n.profileIdentityVerification,
+            trailing:
+                _StatusChip(context.l10n.profileNotVerified, AppColors.gold),
             onTap: () => context.push('/profile/kyc'),
           ),
           _Row(
             icon: 'assets/icons/base/locked.svg',
-            label: 'Security Settings',
+            label: context.l10n.profileSecurity,
             onTap: () => context.push('/profile/security'),
           ),
         ]),
         const SizedBox(height: 22),
 
-        const _GroupLabel('Activity'),
+        _GroupLabel(context.l10n.profileGroupActivity),
         _Group([
           _Row(
             icon: 'assets/icons/base/clock.svg',
-            label: 'Transaction History',
+            label: context.l10n.profileTransactionHistory,
             onTap: () => context.push('/profile/transactions'),
           ),
           _Row(
             icon: 'assets/icons/base/document.svg',
-            label: 'Application History',
+            label: context.l10n.profileApplicationHistory,
             onTap: () => context.push('/profile/applications'),
           ),
           _Row(
             icon: 'assets/icons/base/save.svg',
-            label: 'Saved Drafts',
+            label: context.l10n.profileSavedDrafts,
             onTap: () => context.push('/profile/drafts'),
           ),
         ]),
         const SizedBox(height: 22),
 
-        const _GroupLabel('Preferences'),
+        _GroupLabel(context.l10n.profileGroupPreferences),
         _Group([
           _Row(
             icon: 'assets/icons/base/bell.svg',
-            label: 'Notification Preferences',
+            label: context.l10n.profileNotificationPrefs,
             onTap: () => context.push('/profile/notifications'),
           ),
           _Row(
             icon: 'assets/icons/base/world.svg',
-            label: 'Language',
+            label: context.l10n.profileLanguage,
             trailing: Text(
               lang == AppLanguage.khmer ? 'ភាសាខ្មែរ' : 'English',
               style: const TextStyle(
@@ -192,11 +189,11 @@ class _SignedInView extends StatelessWidget {
         ]),
         const SizedBox(height: 22),
 
-        const _GroupLabel('Support'),
+        _GroupLabel(context.l10n.profileGroupSupport),
         _Group([
           _Row(
-            icon: 'assets/icons/base/telegram.svg',
-            label: 'Telegram Support',
+            icon: 'assets/icons/base/chat.svg',
+            label: context.l10n.profileHelpSupport,
             onTap: () => context.push('/profile/support'),
           ),
         ]),
@@ -226,9 +223,9 @@ class _SignedInView extends StatelessWidget {
                       const ColorFilter.mode(AppColors.danger, BlendMode.srcIn),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Sign out',
-                  style: TextStyle(
+                Text(
+                  context.l10n.profileSignOut,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: AppColors.danger,
@@ -238,102 +235,119 @@ class _SignedInView extends StatelessWidget {
             ),
           ),
         ),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.account});
+/// Navy header with an overlapping circular avatar — mirrors the team profile
+/// screen. [avatar] is the circle's content (initials or an icon).
+class _ProfileHero extends StatelessWidget {
+  const _ProfileHero({
+    required this.avatar,
+    required this.avatarColor,
+    required this.name,
+    this.role,
+    this.subtitle,
+    this.badge,
+  });
 
-  final Account account;
+  final Widget avatar;
+  final Color avatarColor;
+  final String name;
+  final String? role;
+  final String? subtitle;
+  final Widget? badge;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: AppColors.navyDepth,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+    final topInset = MediaQuery.of(context).padding.top;
+    return Column(
+      children: [
+        SizedBox(
+          height: 196 + topInset,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: 150 + topInset,
+                decoration: const BoxDecoration(
+                  gradient: AppColors.heroHeader,
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(28)),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.background,
+                      shape: BoxShape.circle,
+                    ),
+                    child: CircleAvatar(
+                      radius: 52,
+                      backgroundColor: avatarColor,
+                      child: avatar,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.4,
+            ),
+          ),
+        ),
+        if (role != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            role!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.gold,
+            ),
           ),
         ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(16),
-            ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              account.initials,
+              subtitle!,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.gold,
+                fontSize: 13,
+                height: 1.4,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        account.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (account.investor)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Investor',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.gold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  account.email,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: Colors.white.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
-      ),
+        if (badge != null) ...[
+          const SizedBox(height: 12),
+          badge!,
+        ],
+      ],
     );
   }
 }

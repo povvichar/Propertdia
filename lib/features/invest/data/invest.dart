@@ -36,6 +36,7 @@ class InvestProject {
     required this.imageUrl,
     required this.summary,
     this.dividends = const [],
+    this.minTier = InvestorTier.silver,
   });
 
   final String id;
@@ -50,6 +51,9 @@ class InvestProject {
   final String imageUrl;
   final String summary;
   final List<DividendRecord> dividends;
+
+  /// Minimum tier required to invest (early / priority access perk).
+  final InvestorTier minTier;
 
   double get fundedPct => goal <= 0 ? 0 : (raised / goal).clamp(0, 1);
 
@@ -96,6 +100,69 @@ const investorBenefits = <InvestorBenefit>[
     'Every project is pre-vetted by our legal and valuation experts.',
   ),
 ];
+
+// ── Project trust: legal protections + documents ─────────────────────────────
+
+class ProjectProtection {
+  const ProjectProtection(this.icon, this.title, this.blurb);
+  final String icon;
+  final String title;
+  final String blurb;
+}
+
+/// Platform-level safeguards shown on every project detail to build trust.
+const kProjectProtections = <ProjectProtection>[
+  ProjectProtection(
+    'assets/icons/base/certificate.svg',
+    'Hard title secured',
+    'The land holds a government-issued hard title, verified against the '
+        'cadastral registry.',
+  ),
+  ProjectProtection(
+    'assets/icons/base/shield.svg',
+    'Escrow-protected funds',
+    'Capital is held in escrow and released to the developer only against '
+        'verified construction milestones.',
+  ),
+  ProjectProtection(
+    'assets/icons/base/approve.svg',
+    'Independently vetted',
+    'Pre-screened by our in-house legal and valuation experts before listing.',
+  ),
+  ProjectProtection(
+    'assets/icons/base/document.svg',
+    'Registered agreement',
+    'You receive a registered investment contract defining your share and '
+        'payout schedule.',
+  ),
+];
+
+class ProjectDoc {
+  const ProjectDoc(this.name, this.size);
+  final String name;
+  final String size; // human-readable file size for the demo
+}
+
+/// Documents made available for due diligence on each project.
+const kProjectDocs = <ProjectDoc>[
+  ProjectDoc('Investment prospectus', '2.4 MB'),
+  ProjectDoc('Hard title certificate', '1.1 MB'),
+  ProjectDoc('Independent valuation report', '3.2 MB'),
+  ProjectDoc('Investment agreement', '0.6 MB'),
+];
+
+/// Extra gallery shots shown alongside each project's hero image.
+const kGalleryExtras = <String>[
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80',
+  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=80',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=900&q=80',
+  'https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=900&q=80',
+];
+
+// ── Contact ───────────────────────────────────────────────────────────────────
+
+const kAdvisorTelegram = '@propertdia_invest';
+const kAdvisorPhone = '+855 23 900 100';
 
 // ── Wallet transactions ──────────────────────────────────────────────────────
 
@@ -166,6 +233,104 @@ const payMethods = <PayMethod>[
   PayMethod('Wing', 'assets/icons/base/wing.svg'),
 ];
 
+// ── Investor tiers (Silver → Gold → Platinum) ────────────────────────────────
+
+enum InvestorTier { silver, gold, platinum }
+
+/// Shared USD thresholds: a member reaches Gold at $50k and Platinum at $250k —
+/// applied both to application criteria (starting tier) and cumulative invested
+/// amount (activity auto-promotion).
+const kGoldThreshold = 50000;
+const kPlatinumThreshold = 250000;
+
+/// Effectively-unlimited per-deal cap for the top tier.
+const _unlimited = 1 << 30;
+
+InvestorTier tierForValue(int v) => v >= kPlatinumThreshold
+    ? InvestorTier.platinum
+    : v >= kGoldThreshold
+        ? InvestorTier.gold
+        : InvestorTier.silver;
+
+extension InvestorTierX on InvestorTier {
+  String get label => switch (this) {
+        InvestorTier.silver => 'Silver',
+        InvestorTier.gold => 'Gold',
+        InvestorTier.platinum => 'Platinum',
+      };
+
+  Color get color => switch (this) {
+        InvestorTier.silver => AppColors.silver,
+        InvestorTier.gold => AppColors.gold,
+        InvestorTier.platinum => AppColors.platinum,
+      };
+
+  Color get colorSoft => switch (this) {
+        InvestorTier.silver => AppColors.silverSoft,
+        InvestorTier.gold => AppColors.goldSoft,
+        InvestorTier.platinum => AppColors.platinumSoft,
+      };
+
+  /// Maximum amount investable in a single deal at this tier (perk).
+  int get maxInvest => switch (this) {
+        InvestorTier.silver => 25000,
+        InvestorTier.gold => 100000,
+        InvestorTier.platinum => _unlimited,
+      };
+
+  String get maxInvestLabel =>
+      this == InvestorTier.platinum ? 'Unlimited' : usd(maxInvest);
+
+  bool outranks(InvestorTier other) => index > other.index;
+}
+
+// Application criteria option bands (used by the application form + start tier).
+const kIncomeBands = ['Under \$25k', '\$25k – \$100k', '\$100k+'];
+const kAssetBands = ['Under \$50k', '\$50k – \$250k', '\$250k or more'];
+const kExperienceLevels = ['First-time', 'Some experience', 'Experienced'];
+const kFundSources = [
+  'Salary',
+  'Business income',
+  'Savings',
+  'Investment returns',
+  'Other',
+];
+
+/// Maps the selected investable-assets band to the starting tier.
+InvestorTier tierForAssetBand(String band) {
+  final i = kAssetBands.indexOf(band);
+  return i >= 2
+      ? InvestorTier.platinum
+      : i == 1
+          ? InvestorTier.gold
+          : InvestorTier.silver;
+}
+
+/// A submitted investor membership application (KYC-style criteria).
+class InvestorApplication {
+  InvestorApplication({
+    required this.legalName,
+    required this.idNumber,
+    required this.annualIncome,
+    required this.investableAssets,
+    required this.experience,
+    required this.sourceOfFunds,
+    required this.intendedCommitment,
+    required this.riskAccepted,
+    required this.submittedAt,
+  });
+
+  final String legalName;
+  final String idNumber;
+  final String annualIncome;
+  final String investableAssets; // drives the starting tier
+  final String experience;
+  final String sourceOfFunds;
+  final int intendedCommitment;
+  final bool riskAccepted;
+  final DateTime submittedAt;
+}
+
 // ── Live investor state (singleton ChangeNotifier, mirrors savedForceSale) ────
 
 enum MembershipStatus { none, pending, active }
@@ -178,6 +343,8 @@ class InvestStore extends ChangeNotifier {
   int _balance = 0;
   final List<WalletTxn> _txns = [];
   final List<Holding> _holdings = [];
+  InvestorApplication? _application;
+  InvestorTier _startTier = InvestorTier.silver;
 
   MembershipStatus get membership => _membership;
   bool get isInvestor => _membership == MembershipStatus.active;
@@ -205,17 +372,54 @@ class InvestStore extends ChangeNotifier {
       .where((h) => h.project.id == projectId)
       .fold(0, (s, h) => s + h.amount);
 
+  // ── Tier (hybrid: starting tier from criteria, then activity-promoted) ──
+  InvestorApplication? get application => _application;
+
+  /// Effective rank — the higher of the application starting tier and the tier
+  /// earned through cumulative invested amount.
+  InvestorTier get tier {
+    final activity = tierForValue(totalInvested);
+    return activity.outranks(_startTier) ? activity : _startTier;
+  }
+
+  int get tierMaxInvest => tier.maxInvest;
+
+  InvestorTier? get nextTier => switch (tier) {
+        InvestorTier.silver => InvestorTier.gold,
+        InvestorTier.gold => InvestorTier.platinum,
+        InvestorTier.platinum => null,
+      };
+
+  /// Cumulative-invested amount at which the next tier unlocks.
+  int get nextTierAt => switch (tier) {
+        InvestorTier.silver => kGoldThreshold,
+        InvestorTier.gold => kPlatinumThreshold,
+        InvestorTier.platinum => 0,
+      };
+
+  int get nextTierRemaining =>
+      nextTier == null ? 0 : (nextTierAt - totalInvested).clamp(0, nextTierAt);
+
+  double get tierProgress =>
+      nextTier == null ? 1 : (totalInvested / nextTierAt).clamp(0.0, 1.0);
+
+  bool canInvestIn(InvestProject p) => !p.minTier.outranks(tier);
+
   // ── Session ────────────────────────────────────────────────────────────
   void signInNormal() {
     _membership = MembershipStatus.none;
     _balance = 0;
     _txns.clear();
     _holdings.clear();
+    _application = null;
+    _startTier = InvestorTier.silver;
     notifyListeners();
   }
 
   void signInInvestor() {
     _membership = MembershipStatus.active;
+    _application = null;
+    _startTier = InvestorTier.gold; // seeded demo investor presents as Gold
     _balance = 13000;
     _holdings
       ..clear()
@@ -239,17 +443,25 @@ class InvestStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Membership: request → admin review → approved ──────────────────────
-  void requestMembership() {
+  // ── Membership: apply → stays under review → admin approves ────────────
+  void requestMembership(InvestorApplication app) {
     if (_membership != MembershipStatus.none) return;
+    _application = app;
+    _startTier = tierForAssetBand(app.investableAssets);
     _membership = MembershipStatus.pending;
     notifyListeners();
-    Future.delayed(_adminReview, () {
-      if (_membership == MembershipStatus.pending) {
-        _membership = MembershipStatus.active;
-        notifyListeners();
-      }
-    });
+    // No auto-approval: the request stays under review until an admin
+    // approves it (simulated via approveMembership / the long-press on the
+    // pending card in the demo).
+  }
+
+  /// Simulate the admin approving a pending membership request. The new
+  /// investor starts with an empty wallet — no seeded balance or holdings —
+  /// and the starting tier derived from their application criteria.
+  void approveMembership() {
+    if (_membership != MembershipStatus.pending) return;
+    _membership = MembershipStatus.active;
+    notifyListeners();
   }
 
   // ── Deposit: submit payment → admin confirms → credited ────────────────
@@ -317,72 +529,6 @@ class InvestStore extends ChangeNotifier {
 
 final investStore = InvestStore();
 
-// ── Local bank loan products ─────────────────────────────────────────────────
-
-class BankLoan {
-  const BankLoan({
-    required this.name,
-    required this.logo,
-    required this.annualRate,
-    required this.maxTenureYears,
-    required this.maxLtv,
-  });
-
-  final String name;
-  final String logo;
-  final double annualRate; // % per year
-  final int maxTenureYears;
-  final int maxLtv; // % loan-to-value
-}
-
-const mockBanks = <BankLoan>[
-  BankLoan(
-    name: 'ABA Bank',
-    logo: 'assets/icons/base/aba.svg',
-    annualRate: 8.5,
-    maxTenureYears: 25,
-    maxLtv: 70,
-  ),
-  BankLoan(
-    name: 'ACLEDA Bank',
-    logo: 'assets/icons/base/acleda.svg',
-    annualRate: 9.0,
-    maxTenureYears: 20,
-    maxLtv: 70,
-  ),
-  BankLoan(
-    name: 'Wing Bank',
-    logo: 'assets/icons/base/wing.svg',
-    annualRate: 10.5,
-    maxTenureYears: 15,
-    maxLtv: 60,
-  ),
-];
-
-const kLoanMin = 10000;
-const kLoanMax = 1000000;
-
-/// Standard amortized monthly repayment.
-double monthlyRepayment({
-  required double principal,
-  required double annualRatePct,
-  required int years,
-}) {
-  final n = years * 12;
-  final r = annualRatePct / 100 / 12;
-  if (r == 0) return principal / n;
-  final f = _pow(1 + r, n);
-  return principal * r * f / (f - 1);
-}
-
-double _pow(double base, int exp) {
-  var result = 1.0;
-  for (var i = 0; i < exp; i++) {
-    result *= base;
-  }
-  return result;
-}
-
 // ── Mock projects ────────────────────────────────────────────────────────────
 
 const mockProjects = <InvestProject>[
@@ -421,6 +567,7 @@ const mockProjects = <InvestProject>[
     summary:
         'A 1.2-hectare riverfront plot subdivided into 30 titled lots. '
         'Exit on resale once hard titles are issued.',
+    minTier: InvestorTier.gold,
     dividends: [
       DividendRecord(date: '20 May 2026', amount: 0, note: 'Reinvested'),
     ],
@@ -459,6 +606,7 @@ const mockProjects = <InvestProject>[
     summary:
         'Farmland conversion along NR2 near the new airport access road. '
         'Higher tenor, capital-growth play.',
+    minTier: InvestorTier.platinum,
     dividends: [],
   ),
 ];

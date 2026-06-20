@@ -12,12 +12,18 @@ import '../../shared/widgets/photo_gallery.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/wizard_bottom_bar.dart';
 import '../../shared/widgets/wizard_header.dart';
+import 'data/pricing.dart';
 import 'data/valuation.dart';
+import 'widgets/estimate_widgets.dart';
 
 class ValuationWizardScreen extends StatefulWidget {
-  const ValuationWizardScreen({super.key, required this.type});
+  const ValuationWizardScreen({super.key, required this.type, this.prefill});
 
   final ValuationType type;
+
+  /// Inputs carried over from the free Instant Estimate, if the user arrived
+  /// from there. When null this is a fresh request.
+  final EstimatePrefill? prefill;
 
   @override
   State<ValuationWizardScreen> createState() => _ValuationWizardScreenState();
@@ -44,6 +50,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   // Draft fields
   LatLng? _location;
   final _address = TextEditingController();
+  String? _province;
   final _size = TextEditingController();
   String? _landTitle;
   String? _buildingType;
@@ -58,6 +65,22 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   late final Valuation _result;
 
   @override
+  void initState() {
+    super.initState();
+    // Carry over anything the user already entered in the Instant Estimate.
+    final pf = widget.prefill;
+    if (pf != null) {
+      _province = pf.province;
+      _buildingType = pf.propertyType;
+      _landTitle = pf.landTitle;
+      if (pf.size != null) _size.text = pf.size!;
+      if (pf.beds != null) _beds = pf.beds!;
+      if (pf.baths != null) _baths = pf.baths!;
+      if (pf.purpose != null) _purpose = pf.purpose!;
+    }
+  }
+
+  @override
   void dispose() {
     _page.dispose();
     _address.dispose();
@@ -68,7 +91,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   }
 
   bool get _canContinue => switch (_step) {
-        0 => _address.text.trim().isNotEmpty,
+        0 => _address.text.trim().isNotEmpty && _province != null,
         1 => _size.text.trim().isNotEmpty &&
             (widget.type != ValuationType.land || _landTitle != null) &&
             (widget.type != ValuationType.building || _buildingType != null),
@@ -83,7 +106,9 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
     return switch (_step) {
       0 => _address.text.trim().isEmpty
           ? 'Enter a property address to continue'
-          : null,
+          : _province == null
+              ? 'Select a province to continue'
+              : null,
       1 => _size.text.trim().isEmpty
           ? 'Enter the property size to continue'
           : (widget.type == ValuationType.land && _landTitle == null)
@@ -97,6 +122,24 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       3 => 'Choose a payment method to continue',
       _ => null,
     };
+  }
+
+  /// Indicative estimate from the current inputs, or null if not enough data.
+  EstimateResult? get _estimate {
+    final size = double.tryParse(_size.text.trim());
+    if (_province == null || size == null || size <= 0) return null;
+    final isLand = widget.type == ValuationType.land;
+    if (isLand ? _landTitle == null : _buildingType == null) return null;
+    return estimateValue(
+      type: widget.type,
+      province: _province!,
+      propertyType: isLand ? 'Land' : _buildingType!,
+      sizeSqm: size,
+      beds: isLand ? null : _beds,
+      baths: isLand ? null : _baths,
+      landTitle: isLand ? _landTitle : null,
+      purpose: _purpose,
+    );
   }
 
   /// Non-blocking format hint for the contact field (does not gate the step).
@@ -140,18 +183,20 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
 
   void _submit() {
     final isLand = widget.type == ValuationType.land;
+    final est = _estimate;
+    final refNo = 'VL-2026-${DateTime.now().millisecondsSinceEpoch % 9000 + 1000}';
     _result = Valuation(
-      id: 'new',
-      refNo: 'VL-2026-${DateTime.now().millisecondsSinceEpoch % 9000 + 1000}',
+      id: refNo,
+      refNo: refNo,
       type: widget.type,
       status: ValuationStatus.requested,
       address: _address.text.trim(),
-      province: '',
+      province: _province ?? '',
       applicantName: _name.text.trim(),
       lat: _location?.latitude,
       lng: _location?.longitude,
       purpose: _purpose,
-      propertyType: isLand ? 'Land' : _buildingType!,
+      propertyType: isLand ? 'Land' : (_buildingType ?? 'Building'),
       contactMethod: _contact,
       contactInfo: _contactInfo.text.trim(),
       submittedDate: DateTime.now(),
@@ -159,8 +204,14 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       buildingSize: isLand ? null : _size.text.trim(),
       beds: isLand ? null : _beds,
       baths: isLand ? null : _baths,
+      // Indicative figure attached immediately; a valuer certifies it later.
+      estimatedValue: est?.value,
+      valueLow: est?.low,
+      valueHigh: est?.high,
+      comparables: est?.comparables ?? 0,
       photoCount: _photos.length,
     );
+    valuationStore.add(_result);
     FocusScope.of(context).unfocus();
     setState(() => _submitted = true);
   }
@@ -168,7 +219,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   @override
   Widget build(BuildContext context) {
     if (_submitted) {
-      return _SuccessView(valuation: _result, fee: widget.type.fee);
+      return _SuccessView(valuation: _result, fee: _quote.total);
     }
 
     final lastStep = _step == _total - 1;
@@ -201,7 +252,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
               WizardBottomBar(
                 showBack: _step > 0,
                 onBack: _back,
-                label: lastStep ? 'Pay ${usd(widget.type.fee)}' : 'Continue',
+                label: lastStep ? 'Pay ${usd(_quote.total)}' : 'Continue',
                 enabled: _canContinue,
                 hint: _validationHint,
                 onNext: _next,
@@ -229,11 +280,20 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         const FieldLabel('Location', required: true),
         InputField(
           controller: _address,
-          hint: 'e.g. No. 12, Street 310, Sangkat …, City / Province',
+          hint: 'e.g. No. 12, Street 310, Sangkat …',
           maxLines: 2,
           onChanged: (_) => setState(() {}),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
+        const FieldLabel('Province / city', required: true),
+        SelectField(
+          value: _province,
+          hint: 'Select a province',
+          sheetTitle: 'Province / city',
+          options: kCambodiaProvinces,
+          onSelect: (v) => setState(() => _province = v),
+        ),
+        const SizedBox(height: 14),
         MapPickField(location: _location, onPick: _pickOnMap),
         const SizedBox(height: 18),
         const FieldLabel('Valuation purpose'),
@@ -350,13 +410,42 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         if (_contactWarning != null) InlineHint(_contactWarning!),
       ]);
 
+  /// Computed hybrid fee from the entered size, province & purpose.
+  ValuationQuote get _quote => valuationQuote(
+        type: widget.type,
+        areaSqm: double.tryParse(_size.text.trim()),
+        province: _province,
+        purpose: _purpose,
+      );
+
   Widget _stepReview() {
     final isLand = widget.type == ValuationType.land;
+    final est = _estimate;
+    final q = _quote;
     return _wrap([
       const StepHeader(
         title: 'Review & payment',
         subtitle: 'Confirm the details and choose a payment method.',
       ),
+      if (est != null) ...[
+        const SizedBox(height: 18),
+        EstimateRangeCard(
+          value: est.value,
+          low: est.low,
+          high: est.high,
+          comparables: est.comparables,
+          basis: est.basis,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'A certified valuer will confirm this figure in your report.',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            height: 1.4,
+          ),
+        ),
+      ],
       const SizedBox(height: 18),
       Container(
         padding: const EdgeInsets.all(16),
@@ -373,7 +462,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
             if (_location != null) _row('Pinned', formatLatLng(_location!)),
             _row(isLand ? 'Land size' : 'Building size', '${_size.text} m²'),
             if (isLand && _landTitle != null) _row('Title', _landTitle!),
-            if (!isLand) _row('Property', _buildingType!),
+            if (!isLand) _row('Property', _buildingType ?? '—'),
             if (!isLand) _row('Rooms', '$_beds bd · $_baths ba'),
             _row('Photos', '${_photos.length} added'),
             _row('Applicant', _name.text.trim()),
@@ -382,7 +471,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         ),
       ),
       const SizedBox(height: 16),
-      // Fee summary
+      // Fee breakdown (base + size + location + certified report)
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -390,25 +479,44 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: AppColors.cardShadow,
         ),
-        child: Row(
+        child: Column(
           children: [
-            const Text(
-              'Service fee',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
+            _feeRow('Base ${widget.type.short.toLowerCase()} valuation',
+                usd(q.base)),
+            if (q.sizeAddon > 0)
+              _feeRow('Size · ${_size.text.trim()} m²', '+ ${usd(q.sizeAddon)}'),
+            if (q.locationAddon > 0)
+              _feeRow('Site visit · ${_province ?? ''}',
+                  '+ ${usd(q.locationAddon)}'),
+            if (q.certifiedAddon > 0)
+              _feeRow('Certified report · ${_purpose.label}',
+                  '+ ${usd(q.certifiedAddon)}'),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child:
+                  Divider(height: 1, thickness: 1, color: AppColors.divider),
             ),
-            const Spacer(),
-            Text(
-              usd(widget.type.fee),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.navy,
-                letterSpacing: -0.3,
-              ),
+            Row(
+              children: [
+                const Text(
+                  'Total',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  usd(q.total),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -424,6 +532,33 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         const SizedBox(height: 10),
       ],
     ]);
+  }
+
+  Widget _feeRow(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              k,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          Text(
+            v,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _row(String k, String v, {bool last = false}) {
@@ -549,6 +684,15 @@ class _SuccessView extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Certified report expected by ${shortDate(addBusinessDays(valuation.submittedDate, 5))}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const Spacer(),

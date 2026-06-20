@@ -15,9 +15,13 @@ abstract class AppTheme {
         surface: AppColors.surface,
       ),
       scaffoldBackgroundColor: AppColors.background,
+      fontFamily: kFontFamily,
+      fontFamilyFallback: kFontFamilyFallback,
     );
 
+    // Manrope (Latin) with a Kantumruy Pro fallback for Khmer codepoints.
     final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
+      fontFamilyFallback: kFontFamilyFallback,
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
     );
@@ -41,7 +45,7 @@ abstract class AppTheme {
           ),
           textStyle: AppTextStyles.labelLarge.copyWith(
             color: Colors.white,
-            letterSpacing: 0.15,
+            letterSpacing: khmerSafeLetterSpacing(0.15),
           ),
         ),
       ),

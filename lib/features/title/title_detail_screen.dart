@@ -76,6 +76,12 @@ class _TitleDetailScreenState extends State<TitleDetailScreen> {
               _SummaryCard(app: a),
               const SizedBox(height: 14),
 
+              if (a.type == TitleServiceType.transfer &&
+                  a.propertyValue != null) ...[
+                _CostCard(app: a),
+                const SizedBox(height: 14),
+              ],
+
               // Status & service timeline
               _Card(
                 title: 'Status & timeline',
@@ -229,6 +235,58 @@ class _SummaryCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Transfer cost breakdown: service fee + 4% government transfer tax + total.
+class _CostCard extends StatelessWidget {
+  const _CostCard({required this.app});
+
+  final TitleApplication app;
+
+  @override
+  Widget build(BuildContext context) {
+    final fee = app.type.fee;
+    final tax = app.transferTax ?? 0;
+    return _Card(
+      title: 'Cost breakdown',
+      child: Column(
+        children: [
+          _line('Service fee', usd(fee)),
+          const SizedBox(height: 10),
+          _line('Transfer tax (4%)', usd(tax)),
+          const SizedBox(height: 12),
+          const Divider(height: 1, thickness: 1, color: AppColors.divider),
+          const SizedBox(height: 12),
+          _line('Total paid', usd(fee + tax), total: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _line(String k, String v, {bool total = false}) {
+    return Row(
+      children: [
+        Text(
+          k,
+          style: TextStyle(
+            fontSize: total ? 14.5 : 13.5,
+            fontWeight: total ? FontWeight.w800 : FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          v,
+          style: TextStyle(
+            fontSize: total ? 18 : 14.5,
+            fontWeight: FontWeight.w800,
+            color: AppColors.navy,
+            letterSpacing: -0.3,
+          ),
+        ),
+      ],
     );
   }
 }

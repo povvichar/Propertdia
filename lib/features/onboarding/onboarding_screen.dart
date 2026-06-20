@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../shared/providers/app_providers.dart';
+import '../../shared/utils/l10n_ext.dart';
 import '../../shared/widgets/primary_button.dart';
 
 class _OnboardingPage {
@@ -21,24 +22,10 @@ class _OnboardingPage {
   final String asset;
 }
 
-const _pages = [
-  _OnboardingPage(
-    title: 'Real Prices on the Map',
-    subtitle: 'Browse live market prices and trends by area.',
-    asset: 'assets/images/onboarding_map.png',
-  ),
-  _OnboardingPage(
-    title: 'Quick Property Estimate',
-    subtitle:
-        'Get an instant price indication based on type, size, and location.',
-    asset: 'assets/images/onboarding_estimate.png',
-  ),
-  _OnboardingPage(
-    title: 'Title Services in Cambodia',
-    subtitle:
-        'Verify property ownership and legal documents with trusted local experts.',
-    asset: 'assets/images/onboarding_title.png',
-  ),
+const _onbAssets = [
+  'assets/images/onboarding_map.png',
+  'assets/images/onboarding_estimate.png',
+  'assets/images/onboarding_title.png',
 ];
 
 // ── Language data ─────────────────────────────────────────────────────────────
@@ -76,7 +63,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _next() {
-    if (_page == _pages.length - 1) {
+    if (_page == _onbAssets.length - 1) {
       context.go('/register');
     } else {
       _controller.nextPage(
@@ -89,6 +76,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final selected = ref.watch(languageProvider);
+    final l = context.l10n;
+    final pages = [
+      _OnboardingPage(
+          title: l.onbMapTitle,
+          subtitle: l.onbMapSubtitle,
+          asset: _onbAssets[0]),
+      _OnboardingPage(
+          title: l.onbEstimateTitle,
+          subtitle: l.onbEstimateSubtitle,
+          asset: _onbAssets[1]),
+      _OnboardingPage(
+          title: l.onbTitleTitle,
+          subtitle: l.onbTitleSubtitle,
+          asset: _onbAssets[2]),
+    ];
 
     return Scaffold(
       backgroundColor: AppColors.navy,
@@ -97,9 +99,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           PageView.builder(
             controller: _controller,
-            itemCount: _pages.length,
+            itemCount: pages.length,
             onPageChanged: (i) => setState(() => _page = i),
-            itemBuilder: (context, i) => _OnboardingSlide(page: _pages[i]),
+            itemBuilder: (context, i) => _OnboardingSlide(page: pages[i]),
           ),
 
           // Tap-outside barrier — sits below UI, closes dropdown on background tap
@@ -132,9 +134,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                       TextButton(
                         onPressed: () => context.go('/home'),
-                        child: const Text(
-                          'Skip',
-                          style: TextStyle(
+                        child: Text(
+                          l.actionSkip,
+                          style: const TextStyle(
                             color: Colors.white,
                             decoration: TextDecoration.underline,
                             decorationColor: Colors.white,
@@ -144,28 +146,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ],
                   ),
                   const Spacer(),
-                  _PageDots(count: _pages.length, active: _page),
+                  _PageDots(count: _onbAssets.length, active: _page),
                   const SizedBox(height: 24),
                   PrimaryButton(
-                    label:
-                        _page == _pages.length - 1 ? 'Get Started' : 'Continue',
+                    label: _page == _onbAssets.length - 1
+                        ? l.actionGetStarted
+                        : l.actionContinue,
                     onPressed: _next,
                   ),
                   const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Already have an account? ',
-                        style: TextStyle(color: Colors.white, fontSize: 13.5),
+                      Text(
+                        l.onbAlreadyHaveAccount,
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 13.5),
                       ),
                       GestureDetector(
                         onTap: () => context.go('/login'),
-                        child: const MouseRegion(
+                        child: MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: Text(
-                            'Log in',
-                            style: TextStyle(
+                            l.actionLogIn,
+                            style: const TextStyle(
                               color: AppColors.gold,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w600,

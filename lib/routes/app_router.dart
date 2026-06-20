@@ -1,12 +1,17 @@
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../features/about/about_screen.dart';
+import '../features/about/data/about.dart';
+import '../features/about/team_member_detail_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/estimate/data/valuation.dart';
 import '../features/estimate/estimate_screen.dart';
+import '../features/estimate/instant_estimate_screen.dart';
 import '../features/estimate/valuation_detail_screen.dart';
 import '../features/estimate/valuation_wizard_screen.dart';
+import '../features/estimate/valuations_screen.dart';
 import '../features/force_sale/data/force_sale.dart';
 import '../features/force_sale/force_sale_detail_screen.dart';
 import '../features/force_sale/force_sale_screen.dart';
@@ -15,6 +20,8 @@ import '../features/invest/data/invest.dart';
 import '../features/invest/deposit_screen.dart';
 import '../features/invest/invest_detail_screen.dart';
 import '../features/invest/invest_screen.dart';
+import '../features/invest/investor_application_screen.dart';
+import '../features/loan/loan_screen.dart';
 import '../features/map_price/map_price_screen.dart';
 import '../features/media/data/media.dart';
 import '../features/media/media_detail_screen.dart';
@@ -27,6 +34,7 @@ import '../shared/widgets/location_picker_screen.dart';
 import '../features/title/title_detail_screen.dart';
 import '../features/title/title_request_wizard_screen.dart';
 import '../features/title/title_screen.dart';
+import '../features/title/eligibility_screen.dart';
 import '../features/notifications/notification_screen.dart';
 import '../features/profile/profile_settings_screens.dart';
 
@@ -38,6 +46,13 @@ final appRouter = GoRouter(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen()),
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
+    GoRoute(
+      path: '/about/team',
+      builder: (context, state) =>
+          TeamMemberDetailScreen(
+              member: state.extra as TeamMember? ?? aboutTeam.first),
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
         path: '/register', builder: (context, state) => const RegisterScreen()),
@@ -54,10 +69,22 @@ final appRouter = GoRouter(
       builder: (context, state) => const EstimateScreen(),
     ),
     GoRoute(
+      path: '/estimate/instant',
+      builder: (context, state) => const InstantEstimateScreen(),
+    ),
+    GoRoute(
+      path: '/estimate/valuations',
+      builder: (context, state) => const ValuationsScreen(),
+    ),
+    GoRoute(
       path: '/estimate/new',
-      builder: (context, state) => ValuationWizardScreen(
-        type: state.extra as ValuationType? ?? ValuationType.building,
-      ),
+      builder: (context, state) {
+        final pf = state.extra as EstimatePrefill?;
+        return ValuationWizardScreen(
+          type: pf?.type ?? ValuationType.building,
+          prefill: pf,
+        );
+      },
     ),
     GoRoute(
       path: '/estimate/detail',
@@ -67,6 +94,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/title',
       builder: (context, state) => const TitleScreen(),
+    ),
+    GoRoute(
+      path: '/title/eligibility',
+      builder: (context, state) => const EligibilityScreen(),
     ),
     GoRoute(
       path: '/title/new',
@@ -105,6 +136,26 @@ final appRouter = GoRouter(
       path: '/invest/detail',
       builder: (context, state) =>
           InvestDetailScreen(project: state.extra as InvestProject),
+    ),
+    GoRoute(
+      path: '/invest/portfolio',
+      builder: (context, state) => const PortfolioScreen(),
+    ),
+    GoRoute(
+      path: '/invest/apply',
+      builder: (context, state) => const InvestorApplicationScreen(),
+    ),
+    GoRoute(
+      path: '/invest/transactions',
+      builder: (context, state) => const TransactionsScreen(),
+    ),
+    GoRoute(
+      path: '/invest/opportunities',
+      builder: (context, state) => const OpportunitiesScreen(),
+    ),
+    GoRoute(
+      path: '/loan',
+      builder: (context, state) => const LoanScreen(),
     ),
     GoRoute(
       path: '/partnership',

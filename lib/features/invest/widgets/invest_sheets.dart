@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/tier_badge.dart';
 import '../data/invest.dart';
 
 void investToast(BuildContext context, String msg) {
@@ -433,16 +434,20 @@ Future<void> runWithdraw(BuildContext context) async {
 
 /// Invest flow with a built-in "insufficient balance → deposit" path.
 Future<void> runInvest(BuildContext context, InvestProject project) async {
-  // Membership gate first — request needs admin approval before investing.
+  // Membership gate first — application needs admin approval before investing.
   if (!investStore.isInvestor) {
     if (investStore.isPendingReview) {
       investToast(context, 'Your investor application is under review');
       return;
     }
-    final requested = await showMembershipSheet(context);
-    if (requested == true && context.mounted) {
-      investToast(context, 'Request submitted — under admin review');
-    }
+    context.push('/invest/apply');
+    return;
+  }
+
+  // Tier gate — early / priority access deals require a higher rank.
+  if (!investStore.canInvestIn(project)) {
+    investToast(
+        context, 'Early access — available to ${project.minTier.label}+ members');
     return;
   }
 
@@ -454,6 +459,12 @@ Future<void> runInvest(BuildContext context, InvestProject project) async {
     if (!context.mounted || investStore.balance < project.minInvest) return;
   }
 
+  // Per-deal cap is the lower of wallet balance and the tier's investment limit.
+  final tierCap = investStore.tierMaxInvest;
+  final cap = investStore.balance < tierCap ? investStore.balance : tierCap;
+  final overMax = investStore.balance > tierCap
+      ? 'Above your ${investStore.tier.label} limit (${investStore.tier.maxInvestLabel})'
+      : 'More than your wallet balance';
   final r = await showAmountSheet(
     context,
     title: 'Invest in ${project.name}',
@@ -461,13 +472,13 @@ Future<void> runInvest(BuildContext context, InvestProject project) async {
         'Min ${usd(project.minInvest)} · wallet ${usd(investStore.balance)}',
     cta: 'Confirm Investment',
     min: project.minInvest,
-    max: investStore.balance,
+    max: cap,
     quick: [
       project.minInvest,
       project.minInvest * 2,
-      if (investStore.balance >= project.minInvest) investStore.balance,
+      if (cap >= project.minInvest) cap,
     ],
-    overMaxLabel: 'More than your wallet balance',
+    overMaxLabel: overMax,
   );
   if (r == null || !context.mounted) return;
   if (investStore.invest(project, r.amount)) {
@@ -502,10 +513,12 @@ Future<bool?> _showInsufficientSheet(
   );
 }
 
-// ── Membership flow ──────────────────────────────────────────────────────────
+// ── Tier info ────────────────────────────────────────────────────────────────
 
-Future<bool?> showMembershipSheet(BuildContext context) {
-  return showModalBottomSheet<bool>(
+/// Read-only sheet explaining the three investor ranks: how each is reached and
+/// what it unlocks. Opened from the ⓘ on the wallet card / tier card.
+Future<void> showTierInfoSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -513,56 +526,228 @@ Future<bool?> showMembershipSheet(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const _SheetTitle(
+            'Investor tiers',
+            subtitle:
+                'Your rank starts from your application and climbs as you '
+                'invest. Higher tiers unlock more.',
+          ),
+          const SizedBox(height: 18),
+          for (final t in InvestorTier.values) ...[
+            _TierInfoRow(tier: t),
+            const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+class _TierInfoRow extends StatelessWidget {
+  const _TierInfoRow({required this.tier});
+
+  final InvestorTier tier;
+
+  @override
+  Widget build(BuildContext context) {
+    final reach = switch (tier) {
+      InvestorTier.silver =>
+        'Entry rank · invest up to ${tier.maxInvestLabel} per deal.',
+      InvestorTier.gold =>
+        '${usd(kGoldThreshold)}+ in assets or invested · up to '
+            '${tier.maxInvestLabel} per deal · early deal access.',
+      InvestorTier.platinum =>
+        '${usd(kPlatinumThreshold)}+ in assets or invested · '
+            'unlimited per deal · priority access to every deal.',
+    };
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tier.colorSoft,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TierBadge(tier),
+          const SizedBox(height: 8),
+          Text(
+            reach,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: AppColors.textPrimary,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Legal & protections ──────────────────────────────────────────────────────
+
+/// Read-only sheet detailing how the investment is safeguarded, opened from the
+/// "Protected investment" banner on the project detail.
+Future<void> showProtectionsSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => SheetShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SheetTitle(
+            'Legal & protections',
+            subtitle: 'How PROPERTDIA safeguards your investment.',
+          ),
+          const SizedBox(height: 18),
+          for (final pr in kProjectProtections) _ProtectionSheetRow(protection: pr),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ProtectionSheetRow extends StatelessWidget {
+  const _ProtectionSheetRow({required this.protection});
+
+  final ProjectProtection protection;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.successSoft,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: SvgPicture.asset(
+                protection.icon,
+                width: 20,
+                height: 20,
+                colorFilter:
+                    const ColorFilter.mode(AppColors.success, BlendMode.srcIn),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  protection.title,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  protection.blurb,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Document preview ───────────────────────────────────────────────────────
+
+/// Lightweight document viewer sheet (demo): shows the file, then "downloads".
+Future<void> showDocSheet(BuildContext context, ProjectDoc doc) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => SheetShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: AppColors.goldSoft,
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.danger.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'INVESTOR CLUB',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.goldDark,
-                    letterSpacing: 0.6,
+                child: Center(
+                  child: SvgPicture.asset(
+                    'assets/icons/base/file_text.svg',
+                    width: 22,
+                    height: 22,
+                    colorFilter: const ColorFilter.mode(
+                        AppColors.danger, BlendMode.srcIn),
                   ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      doc.name,
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'PDF · ${doc.size}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const _SheetTitle(
-            'Become an Investor',
-            subtitle:
-                'Membership unlocks fractional investing and activates your wallet.',
-          ),
           const SizedBox(height: 18),
-          for (final b in investorBenefits) ...[
-            _BenefitSheetRow(benefit: b),
-            const SizedBox(height: 14),
-          ],
-          const SizedBox(height: 4),
-          PrimaryButton(
-            label: 'Submit Request',
-            trailingIcon: null,
-            onPressed: () {
-              investStore.requestMembership();
-              Navigator.of(context).pop(true);
-            },
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: Text(
-              'Reviewed by our team · approved within 24h',
-              style: TextStyle(
-                fontSize: 11.5,
-                color: AppColors.textSecondary.withValues(alpha: 0.9),
-              ),
+          Text(
+            'This document is verified by PROPERTDIA. Preview opens in your '
+            'reader once downloaded.',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary.withValues(alpha: 0.95),
+              height: 1.45,
             ),
+          ),
+          const SizedBox(height: 22),
+          PrimaryButton(
+            label: 'Download PDF',
+            trailingIcon: 'assets/icons/base/downloadsimple.svg',
+            onPressed: () {
+              Navigator.of(sheetContext).pop();
+              investToast(context, 'Downloaded ${doc.name}');
+            },
           ),
         ],
       ),
@@ -651,86 +836,6 @@ class _BenefitSheetRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ── Loan application flow ────────────────────────────────────────────────────
-
-Future<void> runLoanApply(
-  BuildContext context, {
-  required BankLoan bank,
-  required int amount,
-  required int years,
-  required double monthly,
-}) async {
-  final ok = await showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => SheetShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SheetTitle(
-            'Apply with ${bank.name}',
-            subtitle: 'Review your financing request before submitting.',
-          ),
-          const SizedBox(height: 18),
-          _LoanRow(label: 'Loan amount', value: usd(amount)),
-          _LoanRow(label: 'Tenure', value: '$years years'),
-          _LoanRow(
-              label: 'Interest',
-              value: '${bank.annualRate.toStringAsFixed(1)}% p.a.'),
-          _LoanRow(label: 'Est. monthly', value: usd(monthly), bold: true),
-          const SizedBox(height: 20),
-          PrimaryButton(
-            label: 'Submit Application',
-            trailingIcon: null,
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
-    ),
-  );
-  if (ok == true && context.mounted) {
-    investToast(context,
-        'Application sent — ${bank.name} will contact you on Telegram');
-  }
-}
-
-class _LoanRow extends StatelessWidget {
-  const _LoanRow({required this.label, required this.value, this.bold = false});
-
-  final String label;
-  final String value;
-  final bool bold;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13.5,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: bold ? 16 : 14,
-              fontWeight: FontWeight.w800,
-              color: bold ? AppColors.navy : AppColors.textPrimary,
-              letterSpacing: -0.2,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

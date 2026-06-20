@@ -12,6 +12,7 @@ import '../../shared/widgets/map_pick_field.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/wizard_bottom_bar.dart';
 import '../../shared/widgets/wizard_header.dart';
+import 'data/eligibility.dart';
 import 'data/title_service.dart';
 import 'widgets/title_widgets.dart';
 
@@ -33,10 +34,13 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
   bool _submitted = false;
 
   String? _titleType;
+  String? _province;
+  Nationality _nationality = Nationality.cambodian;
   final _address = TextEditingController();
   LatLng? _location;
   final _applicant = TextEditingController();
   final _transferTo = TextEditingController();
+  final _propertyValue = TextEditingController();
   ContactWay _contact = ContactWay.telegram;
   final _contactInfo = TextEditingController();
   final _uploaded = <int>{};
@@ -52,16 +56,34 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
     _address.dispose();
     _applicant.dispose();
     _transferTo.dispose();
+    _propertyValue.dispose();
     _contactInfo.dispose();
     super.dispose();
   }
 
+  /// Eligibility check for the inline notice — maps the chosen title type to a
+  /// land vs. strata distinction. Only surfaced for foreign applicants.
+  EligibilityResult? get _eligibility {
+    if (_nationality != Nationality.foreign || _titleType == null) return null;
+    final kind = _titleType == 'Strata Title'
+        ? AcquiringKind.strataUnit
+        : AcquiringKind.land;
+    final r = checkEligibility(who: _nationality, kind: kind);
+    return r.verdict == EligibilityVerdict.eligible ? null : r;
+  }
+
+  int? get _propertyValueInt =>
+      int.tryParse(_propertyValue.text.trim().replaceAll(',', ''));
+
   bool get _canContinue => switch (_step) {
         0 => _titleType != null &&
+            _province != null &&
             _address.text.trim().isNotEmpty &&
             _applicant.text.trim().isNotEmpty &&
             _contactInfo.text.trim().isNotEmpty &&
-            (!_isTransfer || _transferTo.text.trim().isNotEmpty),
+            (!_isTransfer ||
+                (_transferTo.text.trim().isNotEmpty &&
+                    _propertyValueInt != null)),
         1 => _uploaded.length == widget.type.requiredDocs.length,
         2 => _bank != null,
         _ => false,
@@ -72,13 +94,17 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
     return switch (_step) {
       0 => _titleType == null
           ? 'Select a title type to continue'
-          : _address.text.trim().isEmpty
-              ? 'Enter the property location to continue'
-              : _applicant.text.trim().isEmpty
-                  ? 'Enter the applicant name to continue'
-                  : (_isTransfer && _transferTo.text.trim().isEmpty)
-                      ? 'Enter the buyer name to continue'
-                      : 'Enter your contact info to continue',
+          : _province == null
+              ? 'Select a province to continue'
+              : _address.text.trim().isEmpty
+                  ? 'Enter the property location to continue'
+                  : _applicant.text.trim().isEmpty
+                      ? 'Enter the applicant name to continue'
+                      : (_isTransfer && _transferTo.text.trim().isEmpty)
+                          ? 'Enter the buyer name to continue'
+                          : (_isTransfer && _propertyValueInt == null)
+                              ? 'Enter the property value to continue'
+                              : 'Enter your contact info to continue',
       1 => 'Upload all required documents to continue',
       2 => 'Choose a payment method to continue',
       _ => null,
@@ -128,13 +154,16 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
       status: TitleStatus.requested,
       titleType: _titleType!,
       address: _address.text.trim(),
+      province: _province ?? '',
       applicantName: _applicant.text.trim(),
       contactWay: _contact,
       contactInfo: _contactInfo.text.trim(),
       submittedDate: DateTime.now(),
       documents: widget.type.requiredDocs,
       transferTo: _isTransfer ? _transferTo.text.trim() : null,
+      propertyValue: _isTransfer ? _propertyValueInt : null,
     );
+    titleStore.add(_result);
     FocusScope.of(context).unfocus();
     setState(() => _submitted = true);
   }
@@ -158,6 +187,7 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
                 step: _step,
                 total: _total,
                 onBack: _back,
+                onInfo: () => showTitleServiceInfo(context, widget.type),
               ),
               Expanded(
                 child: PageView(
@@ -190,6 +220,57 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         children: children,
       );
 
+  /// Inline foreign-ownership warning shown under the title-type selector.
+  Widget _eligibilityNotice(EligibilityResult r) {
+    final c = r.verdict.color;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: c.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: c.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.gavel_rounded, size: 16, color: c),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r.headline,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: () => context.push('/title/eligibility'),
+                    child: Text(
+                      'Check full eligibility →',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: c,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _stepDetails() => _wrap([
         const StepHeader(
           title: 'Property & applicant',
@@ -207,7 +288,7 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
         const SizedBox(height: 8),
         const Text(
           'Hard: fully registered · Soft: provisional (commune-level) · '
-          'LMAP: systematic-registration title.',
+          'LMAP: systematic-registration title · Strata: co-owned building unit.',
           style: TextStyle(
             fontSize: 11.5,
             color: AppColors.textSecondary,
@@ -215,14 +296,34 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
           ),
         ),
         const SizedBox(height: 18),
+        const FieldLabel('Applicant nationality'),
+        ChoiceChipsRow(
+          options: const ['Cambodian', 'Foreign'],
+          selected: _nationality == Nationality.cambodian
+              ? 'Cambodian'
+              : 'Foreign',
+          onSelect: (v) => setState(() => _nationality =
+              v == 'Cambodian' ? Nationality.cambodian : Nationality.foreign),
+        ),
+        if (_eligibility != null) _eligibilityNotice(_eligibility!),
+        const SizedBox(height: 18),
         const FieldLabel('Location', required: true),
         InputField(
           controller: _address,
-          hint: 'e.g. No. 12, Street 310, Sangkat …, City / Province',
+          hint: 'e.g. No. 12, Street 310, Sangkat …',
           maxLines: 2,
           onChanged: (_) => setState(() {}),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
+        const FieldLabel('Province / city', required: true),
+        SelectField(
+          value: _province,
+          hint: 'Select a province',
+          sheetTitle: 'Province / city',
+          options: kCambodiaProvinces,
+          onSelect: (v) => setState(() => _province = v),
+        ),
+        const SizedBox(height: 14),
         MapPickField(location: _location, onPick: _pickOnMap),
         const SizedBox(height: 22),
         const _SubHeader('Applicant & contact'),
@@ -243,6 +344,24 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
             controller: _transferTo,
             hint: 'e.g. Sok Dara',
             onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 18),
+          const FieldLabel('Property value', required: true),
+          InputField(
+            controller: _propertyValue,
+            hint: 'e.g. 182000',
+            suffix: 'USD',
+            keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Used to calculate the 4% government transfer tax. Not sure? Use the free Instant Estimate.',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
           ),
         ],
         const SizedBox(height: 18),
@@ -344,46 +463,24 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
               _row('Service', widget.type.label),
               _row('Title type', _titleType ?? '—'),
               _row('Location', _address.text.trim()),
+              _row('Province', _province ?? '—'),
               if (_location != null) _row('Pinned', formatLatLng(_location!)),
               _row(
                   _isTransfer ? 'Seller' : 'Applicant', _applicant.text.trim()),
               if (_isTransfer) _row('Buyer', _transferTo.text.trim()),
+              if (_isTransfer)
+                _row(
+                    'Property value',
+                    _propertyValueInt != null
+                        ? usd(_propertyValueInt!)
+                        : '—'),
               _row('Documents', '${_uploaded.length} attached'),
               _row('Contact', _contactInfo.text.trim(), last: true),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: AppColors.cardShadow,
-          ),
-          child: Row(
-            children: [
-              const Text(
-                'Service fee',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                usd(widget.type.fee),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.navy,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
-        ),
+        _feeCard(),
         const SizedBox(height: 20),
         const FieldLabel('Payment method'),
         for (final b in kBanks) ...[
@@ -395,6 +492,62 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
           const SizedBox(height: 10),
         ],
       ]);
+
+  /// Fee summary — a single service fee, or a full cost breakdown
+  /// (service fee + 4% transfer tax + total) for a transfer with a value.
+  Widget _feeCard() {
+    final fee = widget.type.fee;
+    final value = _propertyValueInt;
+    final showTax = _isTransfer && value != null;
+    final tax = showTax ? (value * kTransferTaxRate).round() : 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        children: [
+          _feeLine('Service fee', usd(fee)),
+          if (showTax) ...[
+            const SizedBox(height: 10),
+            _feeLine('Transfer tax (4%)', usd(tax)),
+            const SizedBox(height: 12),
+            const Divider(height: 1, thickness: 1, color: AppColors.divider),
+            const SizedBox(height: 12),
+            _feeLine('Total due', usd(fee + tax), total: true),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _feeLine(String k, String v, {bool total = false}) {
+    return Row(
+      children: [
+        Text(
+          k,
+          style: TextStyle(
+            fontSize: total ? 14.5 : 14,
+            fontWeight: total ? FontWeight.w800 : FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          v,
+          style: TextStyle(
+            fontSize: total ? 19 : 15,
+            fontWeight: FontWeight.w800,
+            color: AppColors.navy,
+            letterSpacing: -0.3,
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _row(String k, String v, {bool last = false}) {
     return Padding(

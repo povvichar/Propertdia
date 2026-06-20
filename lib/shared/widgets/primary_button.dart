@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
 
 /// Standard primary CTA — gold, full-width, H = 48px.
 /// [enabled] fades the button when false (still tappable for demo).
@@ -61,11 +62,11 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                   children: [
                     Text(
                       widget.label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
-                        letterSpacing: 0.15,
+                        letterSpacing: khmerSafeLetterSpacing(0.15),
                       ),
                     ),
                     if (widget.trailingIcon != null) ...[
