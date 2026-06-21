@@ -11,8 +11,6 @@ enum ValuationStatus { requested, inReview, approved, rejected, completed }
 
 enum ValuationPurpose { sale, mortgage, legal, personal }
 
-enum ContactMethod { telegram, phone }
-
 extension ValuationTypeX on ValuationType {
   String get label =>
       this == ValuationType.land ? 'Land Valuation' : 'Building Valuation';
@@ -134,7 +132,6 @@ class Valuation {
     this.province = '',
     required this.purpose,
     required this.propertyType,
-    required this.contactMethod,
     required this.contactInfo,
     required this.submittedDate,
     this.applicantName = '',
@@ -159,7 +156,6 @@ class Valuation {
   final String province;
   final ValuationPurpose purpose;
   final String propertyType;
-  final ContactMethod contactMethod;
   final String contactInfo;
   final DateTime submittedDate;
   final String applicantName;
@@ -228,8 +224,7 @@ final mockValuations = <Valuation>[
     applicantName: 'Chan Rithy',
     purpose: ValuationPurpose.sale,
     propertyType: 'Villa',
-    contactMethod: ContactMethod.telegram,
-    contactInfo: '@chanrithy',
+    contactInfo: '+855 12 345 678',
     submittedDate: DateTime(2026, 5, 28),
     buildingSize: '320',
     beds: 4,
@@ -252,7 +247,6 @@ final mockValuations = <Valuation>[
     applicantName: 'Sophea Lim',
     purpose: ValuationPurpose.mortgage,
     propertyType: 'Land',
-    contactMethod: ContactMethod.phone,
     contactInfo: '+855 12 345 678',
     submittedDate: DateTime(2026, 6, 6),
     landSize: '480',
@@ -271,8 +265,7 @@ final mockValuations = <Valuation>[
     applicantName: 'Dara Kim',
     purpose: ValuationPurpose.legal,
     propertyType: 'Condo',
-    contactMethod: ContactMethod.telegram,
-    contactInfo: '@darakim',
+    contactInfo: '+855 17 654 321',
     submittedDate: DateTime(2026, 6, 9),
     buildingSize: '96',
     beds: 2,
@@ -330,10 +323,7 @@ List<Valuation> _generatedValuations() {
       applicantName: names[i % names.length],
       purpose: purposes[i % purposes.length],
       propertyType: propByType[type]!,
-      contactMethod: i.isEven ? ContactMethod.telegram : ContactMethod.phone,
-      contactInfo: i.isEven
-          ? '@${names[i % names.length].split(' ').first.toLowerCase()}'
-          : '+855 1${i % 9} 234 567',
+      contactInfo: '+855 1${i % 9} 234 567',
       submittedDate: DateTime(2026, 6, 1).subtract(Duration(days: i * 3)),
       landSize: type == ValuationType.land ? '${300 + i * 20}' : null,
       buildingSize: type == ValuationType.building ? '${90 + i * 8}' : null,

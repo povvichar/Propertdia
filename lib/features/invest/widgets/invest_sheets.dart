@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/form_fields.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/tier_badge.dart';
 import '../data/invest.dart';
@@ -162,7 +163,8 @@ class _AmountSheetState extends State<_AmountSheet> {
   final _controller = TextEditingController();
   String _method = payMethods.first.name;
 
-  int get _amount => int.tryParse(_controller.text) ?? 0;
+  int get _amount =>
+      int.tryParse(_controller.text.replaceAll(',', '')) ?? 0;
 
   String? get _error {
     final a = _amount;
@@ -223,7 +225,7 @@ class _AmountSheetState extends State<_AmountSheet> {
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(9),
+                          const ThousandsInputFormatter(),
                         ],
                         onChanged: (_) => setState(() {}),
                         style: const TextStyle(

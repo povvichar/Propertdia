@@ -243,8 +243,7 @@ class _SummaryCard extends StatelessWidget {
                       width: factWidth),
                   _Fact(
                     label: 'Contact',
-                    value:
-                        '${v.contactMethod == ContactMethod.telegram ? 'Telegram' : 'Phone'} · ${v.contactInfo}',
+                    value: v.contactInfo,
                     width: factWidth,
                   ),
                 ],

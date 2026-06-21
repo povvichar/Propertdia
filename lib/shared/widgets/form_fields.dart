@@ -150,7 +150,7 @@ class InputField extends StatelessWidget {
       maxLines: maxLines,
       onChanged: onChanged,
       inputFormatters: keyboardType == TextInputType.number
-          ? [FilteringTextInputFormatter.digitsOnly]
+          ? [FilteringTextInputFormatter.digitsOnly, const ThousandsInputFormatter()]
           : null,
       style: const TextStyle(
         fontSize: 14.5,
@@ -538,6 +538,37 @@ class CounterField extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Formats numeric text input with thousands comma separators (e.g. 1000 → 1,000).
+/// Strip commas before parsing: `int.tryParse(ctrl.text.replaceAll(',', ''))`.
+class ThousandsInputFormatter extends TextInputFormatter {
+  const ThousandsInputFormatter({this.maxDigits = 9});
+  final int maxDigits;
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return newValue.copyWith(text: '');
+    if (digits.length > maxDigits) return oldValue;
+    final formatted = _addCommas(digits);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  static String addCommas(String digits) => _addCommas(digits);
+
+  static String _addCommas(String digits) {
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buf.write(',');
+      buf.write(digits[i]);
+    }
+    return buf.toString();
   }
 }
 

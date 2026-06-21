@@ -6,21 +6,35 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/gallery_viewer.dart';
 import '../../shared/widgets/glass_icon_button.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'data/invest.dart';
 import 'widgets/invest_sheets.dart';
 import 'widgets/invest_widgets.dart';
 
-class InvestDetailScreen extends StatelessWidget {
+class InvestDetailScreen extends StatefulWidget {
   const InvestDetailScreen({super.key, required this.project});
 
   final InvestProject project;
 
   @override
+  State<InvestDetailScreen> createState() => _InvestDetailScreenState();
+}
+
+class _InvestDetailScreenState extends State<InvestDetailScreen> {
+  late final List<String> _gallery;
+  int _selectedPhoto = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _gallery = [widget.project.imageUrl, ...kGalleryExtras];
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final p = project;
-    final gallery = [p.imageUrl, ...kGalleryExtras];
+    final p = widget.project;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
@@ -33,13 +47,17 @@ class InvestDetailScreen extends StatelessWidget {
                 // Hero image
                 Stack(
                   children: [
-                    AspectRatio(
-                      aspectRatio: 16 / 11,
-                      child: Image.network(
-                        p.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Container(color: AppColors.surfaceMuted),
+                    GestureDetector(
+                      onTap: () => showGalleryViewer(
+                          context, _gallery, _selectedPhoto),
+                      child: AspectRatio(
+                        aspectRatio: 16 / 11,
+                        child: Image.network(
+                          _gallery[_selectedPhoto],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              Container(color: AppColors.surfaceMuted),
+                        ),
                       ),
                     ),
                     const Positioned.fill(
@@ -51,6 +69,32 @@ class InvestDetailScreen extends StatelessWidget {
                             colors: [Color(0x33000000), Color(0x00000000)],
                           ),
                         ),
+                      ),
+                    ),
+                    const Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 90,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Color(0x88000000)],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 16,
+                      left: 16,
+                      right: 16,
+                      child: GalleryThumbnailStrip(
+                        images: _gallery,
+                        selected: _selectedPhoto,
+                        onSelect: (i) =>
+                            setState(() => _selectedPhoto = i),
                       ),
                     ),
                   ],
@@ -122,11 +166,6 @@ class InvestDetailScreen extends StatelessWidget {
 
                         // Trust strip — full breakdown opens in a sheet
                         const _ProtectionBanner(),
-                        const SizedBox(height: 22),
-
-                        const _Heading('Gallery'),
-                        const SizedBox(height: 12),
-                        _PhotoGallery(images: gallery),
                         const SizedBox(height: 22),
 
                         const _Heading('About this project'),
@@ -555,149 +594,6 @@ class _ProtectionBanner extends StatelessWidget {
                 size: 19, color: AppColors.success),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PhotoGallery extends StatelessWidget {
-  const _PhotoGallery({required this.images});
-
-  final List<String> images;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 82,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: images.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, i) => GestureDetector(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              fullscreenDialog: true,
-              builder: (_) => _GalleryViewer(images: images, initial: i),
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              children: [
-                Image.network(
-                  images[i],
-                  width: 112,
-                  height: 82,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 112,
-                    height: 82,
-                    color: AppColors.surfaceMuted,
-                  ),
-                ),
-                if (i == images.length - 1 && images.length > 1)
-                  Positioned.fill(
-                    child: Container(
-                      alignment: Alignment.center,
-                      color: AppColors.navy.withValues(alpha: 0.35),
-                      child: Text(
-                        '${images.length} photos',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Full-screen swipeable photo viewer with a counter and close button.
-class _GalleryViewer extends StatefulWidget {
-  const _GalleryViewer({required this.images, required this.initial});
-
-  final List<String> images;
-  final int initial;
-
-  @override
-  State<_GalleryViewer> createState() => _GalleryViewerState();
-}
-
-class _GalleryViewerState extends State<_GalleryViewer> {
-  late final PageController _controller =
-      PageController(initialPage: widget.initial);
-  late int _index = widget.initial;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _controller,
-            itemCount: widget.images.length,
-            onPageChanged: (i) => setState(() => _index = i),
-            itemBuilder: (_, i) => InteractiveViewer(
-              minScale: 1,
-              maxScale: 4,
-              child: Center(
-                child: Image.network(
-                  widget.images[i],
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.broken_image_outlined,
-                    color: Colors.white24,
-                    size: 48,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Row(
-                children: [
-                  GlassIconButton(
-                    asset: 'assets/icons/base/close.svg',
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_index + 1} / ${widget.images.length}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

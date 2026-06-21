@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/gallery_viewer.dart';
 import '../../shared/widgets/primary_button.dart';
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
@@ -61,17 +62,23 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: 100 + bottomInset),
-          child: Column(
-            children: [
-              _buildHero(context),
-              const _DetailContent(),
-            ],
-          ),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: 100 + bottomInset),
+              child: Column(
+                children: [
+                  _buildHero(context),
+                  const _DetailContent(),
+                ],
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _BottomBar(bottomInset: bottomInset),
+            ),
+          ],
         ),
-        // ── Sticky bottom CTA ─────────────────────────────────────────────
-        bottomNavigationBar: _BottomBar(bottomInset: bottomInset),
       ),
     );
   }
@@ -83,11 +90,15 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
       child: Stack(
         children: [
           Positioned.fill(
-            child: Image.network(
-              _kGallery[_selectedPhoto],
-              fit: BoxFit.cover,
-              loadingBuilder: (_, child, p) =>
-                  p == null ? child : Container(color: AppColors.iconTile),
+            child: GestureDetector(
+              onTap: () =>
+                  showGalleryViewer(context, _kGallery, _selectedPhoto),
+              child: Image.network(
+                _kGallery[_selectedPhoto],
+                fit: BoxFit.cover,
+                loadingBuilder: (_, child, p) =>
+                    p == null ? child : Container(color: AppColors.iconTile),
+              ),
             ),
           ),
           // Bottom scrim for thumbnail readability.
@@ -111,42 +122,10 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
             bottom: 40,
             left: 16,
             right: 16,
-            child: SizedBox(
-              height: 52,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _kGallery.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, i) {
-                  final selected = i == _selectedPhoto;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedPhoto = i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      width: 70,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(9),
-                        border: Border.all(
-                          color: selected
-                              ? Colors.white
-                              : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          _kGallery[i],
-                          fit: BoxFit.cover,
-                          loadingBuilder: (_, child, p) => p == null
-                              ? child
-                              : Container(color: AppColors.iconTile),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+            child: GalleryThumbnailStrip(
+              images: _kGallery,
+              selected: _selectedPhoto,
+              onSelect: (i) => setState(() => _selectedPhoto = i),
             ),
           ),
           // Back button.
@@ -502,38 +481,54 @@ class _BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          20, 14, 20, bottomInset > 0 ? bottomInset : 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: AppColors.border, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          _ContactIconButton(
-            asset: 'assets/icons/base/phone.svg',
-            onTap: () {},
-            size: 48,
-          ),
-          const SizedBox(width: 10),
-          _ContactIconButton(
-            asset: 'assets/icons/base/telegram.svg',
-            onTap: () {},
-            raw: true,
-            size: 48,
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: PrimaryButton(
-              label: 'Contact Agent',
-              trailingIcon: null,
-              onPressed: _noop,
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+              16, 14, 16, bottomInset > 0 ? bottomInset : 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.7), width: 1),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navy.withValues(alpha: 0.10),
+                blurRadius: 22,
+                offset: const Offset(0, -6),
+              ),
+            ],
           ),
-        ],
+          child: Row(
+            children: [
+              _ContactIconButton(
+                asset: 'assets/icons/base/phone.svg',
+                onTap: () {},
+                size: 48,
+              ),
+              const SizedBox(width: 10),
+              _ContactIconButton(
+                asset: 'assets/icons/base/telegram.svg',
+                onTap: () {},
+                raw: true,
+                size: 48,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: PrimaryButton(
+                  label: 'Contact Agent',
+                  trailingIcon: null,
+                  onPressed: _noop,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

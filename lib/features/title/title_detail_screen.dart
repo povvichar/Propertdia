@@ -226,11 +226,7 @@ class _SummaryCard extends StatelessWidget {
               if (a.transferTo != null)
                 _Fact(label: 'Buyer', value: a.transferTo!),
               _Fact(label: 'Submitted', value: shortDate(a.submittedDate)),
-              _Fact(
-                label: 'Contact',
-                value:
-                    '${a.contactWay == ContactWay.telegram ? 'Telegram' : 'Phone'} · ${a.contactInfo}',
-              ),
+              _Fact(label: 'Contact', value: a.contactInfo),
             ],
           ),
         ],

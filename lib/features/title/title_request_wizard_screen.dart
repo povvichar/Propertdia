@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/data/cambodia.dart';
 import '../../shared/widgets/bank_select.dart';
+import '../../shared/widgets/payment_sheet.dart';
 import '../../shared/widgets/form_fields.dart';
 import '../../shared/widgets/map_pick_field.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -41,8 +42,8 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
   final _applicant = TextEditingController();
   final _transferTo = TextEditingController();
   final _propertyValue = TextEditingController();
-  ContactWay _contact = ContactWay.telegram;
   final _contactInfo = TextEditingController();
+  final _contactInfo2 = TextEditingController();
   final _uploaded = <int>{};
   String? _bank;
 
@@ -58,6 +59,7 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
     _transferTo.dispose();
     _propertyValue.dispose();
     _contactInfo.dispose();
+    _contactInfo2.dispose();
     super.dispose();
   }
 
@@ -111,12 +113,6 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
     };
   }
 
-  /// Non-blocking format hint for the contact field (does not gate the step).
-  String? get _contactWarning => contactFormatWarning(
-        isTelegram: _contact == ContactWay.telegram,
-        value: _contactInfo.text,
-      );
-
   Future<void> _pickOnMap() async {
     final initial = _location ?? kCambodiaCenter;
     final picked = await context.push<LatLng>('/pick-location', extra: initial);
@@ -131,7 +127,16 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
           duration: const Duration(milliseconds: 280),
           curve: Curves.easeOutCubic);
     } else {
-      _submit();
+      final bank = kBanks.firstWhere((b) => b.id == _bank);
+      final tax = _isTransfer && _propertyValueInt != null
+          ? (_propertyValueInt! * kTransferTaxRate).round()
+          : 0;
+      showPaymentSheet(
+        context,
+        bank: bank,
+        amountUsd: widget.type.fee + tax,
+        onSuccess: _submit,
+      );
     }
   }
 
@@ -156,8 +161,9 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
       address: _address.text.trim(),
       province: _province ?? '',
       applicantName: _applicant.text.trim(),
-      contactWay: _contact,
-      contactInfo: _contactInfo.text.trim(),
+      contactInfo: _contactInfo2.text.trim().isEmpty
+          ? _contactInfo.text.trim()
+          : '${_contactInfo.text.trim()} · ${_contactInfo2.text.trim()}',
       submittedDate: DateTime.now(),
       documents: widget.type.requiredDocs,
       transferTo: _isTransfer ? _transferTo.text.trim() : null,
@@ -180,33 +186,41 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
-          child: Column(
+          bottom: false,
+          child: Stack(
             children: [
-              WizardHeader(
-                title: widget.type.label,
-                step: _step,
-                total: _total,
-                onBack: _back,
-                onInfo: () => showTitleServiceInfo(context, widget.type),
+              Column(
+                children: [
+                  WizardHeader(
+                    title: widget.type.label,
+                    step: _step,
+                    total: _total,
+                    onBack: _back,
+                    onInfo: () => showTitleServiceInfo(context, widget.type),
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: _page,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _stepDetails(),
+                        _stepDocuments(),
+                        _stepReview(),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: PageView(
-                  controller: _page,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _stepDetails(),
-                    _stepDocuments(),
-                    _stepReview(),
-                  ],
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: WizardBottomBar(
+                  showBack: _step > 0,
+                  onBack: _back,
+                  label: lastStep ? 'Pay ${usd(widget.type.fee)}' : 'Continue',
+                  enabled: _canContinue,
+                  hint: _validationHint,
+                  onNext: _next,
                 ),
-              ),
-              WizardBottomBar(
-                showBack: _step > 0,
-                onBack: _back,
-                label: lastStep ? 'Pay ${usd(widget.type.fee)}' : 'Continue',
-                enabled: _canContinue,
-                hint: _validationHint,
-                onNext: _next,
               ),
             ],
           ),
@@ -216,7 +230,8 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
   }
 
   Widget _wrap(List<Widget> children) => ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: EdgeInsets.fromLTRB(
+            16, 8, 16, 160 + MediaQuery.paddingOf(context).bottom),
         children: children,
       );
 
@@ -349,7 +364,7 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
           const FieldLabel('Property value', required: true),
           InputField(
             controller: _propertyValue,
-            hint: 'e.g. 182000',
+            hint: 'e.g. 182,000',
             suffix: 'USD',
             keyboardType: TextInputType.number,
             onChanged: (_) => setState(() {}),
@@ -365,28 +380,21 @@ class _TitleRequestWizardScreenState extends State<TitleRequestWizardScreen> {
           ),
         ],
         const SizedBox(height: 18),
-        const FieldLabel('Contact method'),
-        ChoiceChipsRow(
-          options: const ['Telegram', 'Phone'],
-          selected: _contact == ContactWay.telegram ? 'Telegram' : 'Phone',
-          onSelect: (v) {
-            final next =
-                v == 'Telegram' ? ContactWay.telegram : ContactWay.phone;
-            if (next != _contact) _contactInfo.clear();
-            setState(() => _contact = next);
-          },
-        ),
-        const SizedBox(height: 14),
+        const FieldLabel('Phone number', required: true),
         InputField(
           controller: _contactInfo,
-          hint:
-              _contact == ContactWay.telegram ? '@username' : '+855 12 345 678',
-          keyboardType: _contact == ContactWay.phone
-              ? TextInputType.phone
-              : TextInputType.text,
+          hint: '+855 12 345 678',
+          keyboardType: TextInputType.phone,
           onChanged: (_) => setState(() {}),
         ),
-        if (_contactWarning != null) InlineHint(_contactWarning!),
+        const SizedBox(height: 14),
+        const FieldLabel('Other phone number'),
+        InputField(
+          controller: _contactInfo2,
+          hint: '+855 99 888 777',
+          keyboardType: TextInputType.phone,
+          onChanged: (_) => setState(() {}),
+        ),
       ]);
 
   Widget _stepDocuments() {
