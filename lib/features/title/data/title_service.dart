@@ -13,8 +13,6 @@ const kTransferTaxRate = 0.04;
 
 enum TitleStatus { requested, inReview, approved, rejected, completed }
 
-enum ContactWay { telegram, phone }
-
 extension TitleServiceTypeX on TitleServiceType {
   String get label => switch (this) {
         TitleServiceType.verification => 'Title Verification',
@@ -182,7 +180,6 @@ class TitleApplication {
     required this.address,
     this.province = '',
     required this.applicantName,
-    required this.contactWay,
     required this.contactInfo,
     required this.submittedDate,
     required this.documents,
@@ -198,7 +195,6 @@ class TitleApplication {
   final String address;
   final String province;
   final String applicantName;
-  final ContactWay contactWay;
   final String contactInfo;
   final DateTime submittedDate;
   final List<String> documents;
@@ -239,8 +235,7 @@ final mockTitleApplications = <TitleApplication>[
     address: 'No. 27, Street 360, BKK1',
     province: 'Phnom Penh',
     applicantName: 'Chan Rithy',
-    contactWay: ContactWay.telegram,
-    contactInfo: '@chanrithy',
+    contactInfo: '+855 12 345 678',
     submittedDate: DateTime(2026, 5, 20),
     documents: [
       'Title certificate',
@@ -258,7 +253,6 @@ final mockTitleApplications = <TitleApplication>[
     address: 'Wat Bo Road, Sangkat Sala Kamreuk',
     province: 'Siem Reap',
     applicantName: 'Sophea Lim',
-    contactWay: ContactWay.phone,
     contactInfo: '+855 12 345 678',
     submittedDate: DateTime(2026, 6, 8),
     documents: ['Title certificate (front & back)', 'Owner ID card'],
@@ -272,8 +266,7 @@ final mockTitleApplications = <TitleApplication>[
     address: 'Krong Battambang, Sangkat Svay Por',
     province: 'Battambang',
     applicantName: 'Dara Kim',
-    contactWay: ContactWay.telegram,
-    contactInfo: '@darakim',
+    contactInfo: '+855 17 654 321',
     submittedDate: DateTime(2026, 6, 11),
     documents: [
       'Title certificate',
@@ -320,9 +313,7 @@ List<TitleApplication> _generatedTitleApplications() {
       address: place.$1,
       province: place.$2,
       applicantName: names[i % names.length],
-      contactWay: i.isEven ? ContactWay.telegram : ContactWay.phone,
-      contactInfo:
-          i.isEven ? '@${names[i % names.length].split(' ').first.toLowerCase()}' : '+855 1${(i % 9)} 234 567',
+      contactInfo: '+855 1${(i % 9)} 234 567',
       submittedDate: DateTime(2026, 6, 1).subtract(Duration(days: i * 3)),
       documents: type.requiredDocs,
       transferTo: isTransfer ? 'Buyer ${i + 1}' : null,

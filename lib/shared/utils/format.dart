@@ -53,16 +53,3 @@ DateTime addBusinessDays(DateTime from, int days) {
   }
   return d;
 }
-
-/// Non-blocking format hint for a Telegram/phone contact field, or null when
-/// the value is empty or looks valid. Phone check is Cambodia-friendly: at
-/// least 8 digits (e.g. `012 345 678` or `+855 12 345 678`).
-String? contactFormatWarning({required bool isTelegram, required String value}) {
-  final t = value.trim();
-  if (t.isEmpty) return null;
-  if (isTelegram) {
-    return t.startsWith('@') ? null : 'Telegram usernames start with “@”';
-  }
-  final digits = t.replaceAll(RegExp(r'[^0-9]'), '');
-  return digits.length >= 8 ? null : 'Enter a valid phone number';
-}

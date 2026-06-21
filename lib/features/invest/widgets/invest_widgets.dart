@@ -127,7 +127,7 @@ class FavoriteButton extends StatelessWidget {
                 height: size * 0.5,
                 colorFilter: ColorFilter.mode(
                   fav
-                      ? AppColors.danger
+                      ? AppColors.gold
                       : (onDark ? Colors.white : AppColors.textSecondary),
                   BlendMode.srcIn,
                 ),

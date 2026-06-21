@@ -12,6 +12,7 @@ import '../../shared/widgets/photo_gallery.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/wizard_bottom_bar.dart';
 import '../../shared/widgets/wizard_header.dart';
+import '../../shared/widgets/payment_sheet.dart';
 import 'data/pricing.dart';
 import 'data/valuation.dart';
 import 'widgets/estimate_widgets.dart';
@@ -58,8 +59,8 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   int _baths = 2;
   final _photos = <String>[];
   final _name = TextEditingController();
-  ContactMethod _contact = ContactMethod.telegram;
   final _contactInfo = TextEditingController();
+  final _contactInfo2 = TextEditingController();
   String? _bank;
   ValuationPurpose _purpose = ValuationPurpose.sale;
   late final Valuation _result;
@@ -87,6 +88,7 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
     _size.dispose();
     _name.dispose();
     _contactInfo.dispose();
+    _contactInfo2.dispose();
     super.dispose();
   }
 
@@ -142,12 +144,6 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
     );
   }
 
-  /// Non-blocking format hint for the contact field (does not gate the step).
-  String? get _contactWarning => contactFormatWarning(
-        isTelegram: _contact == ContactMethod.telegram,
-        value: _contactInfo.text,
-      );
-
   Future<void> _pickOnMap() async {
     final initial = _location ?? kCambodiaCenter;
     final picked = await context.push<LatLng>('/pick-location', extra: initial);
@@ -164,7 +160,13 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
         curve: Curves.easeOutCubic,
       );
     } else {
-      _submit();
+      final bank = kBanks.firstWhere((b) => b.id == _bank);
+      showPaymentSheet(
+        context,
+        bank: bank,
+        amountUsd: _quote.total,
+        onSuccess: _submit,
+      );
     }
   }
 
@@ -197,8 +199,9 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       lng: _location?.longitude,
       purpose: _purpose,
       propertyType: isLand ? 'Land' : (_buildingType ?? 'Building'),
-      contactMethod: _contact,
-      contactInfo: _contactInfo.text.trim(),
+      contactInfo: _contactInfo2.text.trim().isEmpty
+          ? _contactInfo.text.trim()
+          : '${_contactInfo.text.trim()} · ${_contactInfo2.text.trim()}',
       submittedDate: DateTime.now(),
       landSize: isLand ? _size.text.trim() : null,
       buildingSize: isLand ? null : _size.text.trim(),
@@ -229,33 +232,41 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
-          child: Column(
+          bottom: false,
+          child: Stack(
             children: [
-              WizardHeader(
-                title: widget.type.label,
-                step: _step,
-                total: _total,
-                onBack: _back,
+              Column(
+                children: [
+                  WizardHeader(
+                    title: widget.type.label,
+                    step: _step,
+                    total: _total,
+                    onBack: _back,
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: _page,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _stepLocation(),
+                        _stepDetails(),
+                        _stepPhotosContact(),
+                        _stepReview(),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: PageView(
-                  controller: _page,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _stepLocation(),
-                    _stepDetails(),
-                    _stepPhotosContact(),
-                    _stepReview(),
-                  ],
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: WizardBottomBar(
+                  showBack: _step > 0,
+                  onBack: _back,
+                  label: lastStep ? 'Pay ${usd(_quote.total)}' : 'Continue',
+                  enabled: _canContinue,
+                  hint: _validationHint,
+                  onNext: _next,
                 ),
-              ),
-              WizardBottomBar(
-                showBack: _step > 0,
-                onBack: _back,
-                label: lastStep ? 'Pay ${usd(_quote.total)}' : 'Continue',
-                enabled: _canContinue,
-                hint: _validationHint,
-                onNext: _next,
               ),
             ],
           ),
@@ -267,7 +278,8 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
   // ── Steps ──────────────────────────────────────────────────────────────
 
   Widget _wrap(List<Widget> children) => ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: EdgeInsets.fromLTRB(
+            16, 8, 16, 160 + MediaQuery.paddingOf(context).bottom),
         children: children,
       );
 
@@ -385,29 +397,21 @@ class _ValuationWizardScreenState extends State<ValuationWizardScreen> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 18),
-        const FieldLabel('Contact method'),
-        ChoiceChipsRow(
-          options: const ['Telegram', 'Phone'],
-          selected: _contact == ContactMethod.telegram ? 'Telegram' : 'Phone',
-          onSelect: (v) {
-            final next =
-                v == 'Telegram' ? ContactMethod.telegram : ContactMethod.phone;
-            if (next != _contact) _contactInfo.clear();
-            setState(() => _contact = next);
-          },
-        ),
-        const SizedBox(height: 14),
+        const FieldLabel('Phone number', required: true),
         InputField(
           controller: _contactInfo,
-          hint: _contact == ContactMethod.telegram
-              ? '@username'
-              : '+855 12 345 678',
-          keyboardType: _contact == ContactMethod.phone
-              ? TextInputType.phone
-              : TextInputType.text,
+          hint: '+855 12 345 678',
+          keyboardType: TextInputType.phone,
           onChanged: (_) => setState(() {}),
         ),
-        if (_contactWarning != null) InlineHint(_contactWarning!),
+        const SizedBox(height: 14),
+        const FieldLabel('Other phone number'),
+        InputField(
+          controller: _contactInfo2,
+          hint: '+855 99 888 777',
+          keyboardType: TextInputType.phone,
+          onChanged: (_) => setState(() {}),
+        ),
       ]);
 
   /// Computed hybrid fee from the entered size, province & purpose.

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,7 +34,8 @@ class _DepositScreenState extends State<DepositScreen> {
   int _left = _ttl;
   Timer? _timer;
 
-  int get _amount => int.tryParse(_amountCtrl.text) ?? 0;
+  int get _amount =>
+      int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
   bool get _amountValid => _amount >= 10;
   bool get _expired => _left <= 0;
 
@@ -170,99 +172,89 @@ class _DepositScreenState extends State<DepositScreen> {
                   color: AppColors.textSecondary.withValues(alpha: 0.95),
                 ),
               ),
-              const SizedBox(height: 28),
-              // Large amount input field with edit icon
-              GestureDetector(
-                onTap: () {
-                  _amountCtrl.selection = TextSelection(
-                    baseOffset: 0,
-                    extentOffset: _amountCtrl.text.length,
-                  );
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(16),
+              const SizedBox(height: 24),
+              // ── Open amount entry (fintech style — no box) ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    '\$',
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w700,
+                      color: _amount > 0
+                          ? AppColors.navy
+                          : AppColors.textSecondary.withValues(alpha: 0.35),
+                    ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(top: 2),
-                              child: Text(
-                                '\$',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: TextField(
-                                controller: _amountCtrl,
-                                autofocus: true,
-                                textAlign: TextAlign.left,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(9),
-                                ],
-                                onChanged: (_) => setState(() {}),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                  letterSpacing: -0.6,
-                                ),
-                                decoration: InputDecoration(
-                                  isCollapsed: true,
-                                  filled: true,
-                                  fillColor: Colors.transparent,
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  hintText: '0',
-                                  hintStyle: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textSecondary
-                                        .withValues(alpha: 0.3),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: TextField(
+                      controller: _amountCtrl,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        _ThousandsFormatter(),
+                      ],
+                      onChanged: (_) => setState(() {}),
+                      cursorColor: AppColors.gold,
+                      cursorWidth: 2.5,
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -1.5,
+                        height: 1.1,
+                      ),
+                      decoration: InputDecoration(
+                        filled: false,
+                        border: const UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: AppColors.divider, width: 1.5),
+                        ),
+                        enabledBorder: const UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: AppColors.divider, width: 1.5),
+                        ),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: AppColors.gold, width: 2),
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.only(bottom: 8),
+                        hintText: '0',
+                        hintStyle: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          color:
+                              AppColors.textSecondary.withValues(alpha: 0.2),
+                          letterSpacing: -1.5,
                         ),
                       ),
-                      SvgPicture.asset(
-                        'assets/icons/base/pencil.svg',
-                        width: 16,
-                        height: 16,
-                        colorFilter: const ColorFilter.mode(
-                          AppColors.textSecondary,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      'USD',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 28),
-              // Max credit limit
-              const Text(
-                'Max. Credit Limit : \$1,000',
+              const SizedBox(height: 10),
+              Text(
+                'Min. \$10 · Max. \$1,000',
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 20),
@@ -274,7 +266,7 @@ class _DepositScreenState extends State<DepositScreen> {
                   for (final q in const [100, 500, 1000, 5000])
                     GestureDetector(
                       onTap: () => setState(() {
-                        _amountCtrl.text = '$q';
+                        _amountCtrl.text = _ThousandsFormatter.format(q);
                         _amountCtrl.selection = TextSelection.collapsed(
                             offset: _amountCtrl.text.length);
                       }),
@@ -758,19 +750,33 @@ class _BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+              20, 14, 20, bottomInset > 0 ? bottomInset : 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.7), width: 1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navy.withValues(alpha: 0.10),
+                blurRadius: 22,
+                offset: const Offset(0, -6),
+              ),
+            ],
           ),
-        ],
+          child: child,
+        ),
       ),
-      child: child,
     );
   }
 }
@@ -822,6 +828,38 @@ class _MethodChip extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Thousands formatter ───────────────────────────────────────────────────────
+
+class _ThousandsFormatter extends TextInputFormatter {
+  static const _maxDigits = 9;
+
+  static String format(int n) => _addCommas(n.toString());
+
+  static String _addCommas(String digits) {
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buf.write(',');
+      buf.write(digits[i]);
+    }
+    return buf.toString();
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(',', '');
+    if (digits.isEmpty) return newValue.copyWith(text: '');
+    if (digits.length > _maxDigits) return oldValue;
+    final formatted = _addCommas(digits);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

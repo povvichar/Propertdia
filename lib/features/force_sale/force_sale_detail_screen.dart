@@ -44,7 +44,11 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
+        body: Stack(
+          children: [
+        SingleChildScrollView(
+          padding: EdgeInsets.only(
+              bottom: 100 + MediaQuery.paddingOf(context).bottom),
           child: Column(
             children: [
               SizedBox(
@@ -285,9 +289,14 @@ class _ForceSaleDetailScreenState extends State<ForceSaleDetailScreen> {
             ],
           ),
         ),
-        bottomNavigationBar: _BottomBar(
-          asking: p.askingPrice,
-          onOffer: () => _toast('Offer flow — coming soon'),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: _BottomBar(
+            asking: p.askingPrice,
+            onOffer: () => _toast('Offer flow — coming soon'),
+          ),
+        ),
+          ],
         ),
       ),
     );
@@ -591,20 +600,31 @@ class _BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+              16, 14, 16, bottomInset > 0 ? bottomInset : 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.7), width: 1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navy.withValues(alpha: 0.10),
+                blurRadius: 22,
+                offset: const Offset(0, -6),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
+          child: Row(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,6 +649,8 @@ class _BottomBar extends StatelessWidget {
           Expanded(
               child: PrimaryButton(label: 'Make an offer', onPressed: onOffer)),
         ],
+          ),
+        ),
       ),
     );
   }
