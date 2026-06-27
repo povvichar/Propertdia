@@ -7,7 +7,7 @@ enum PostCategory { news, article }
 extension PostCategoryX on PostCategory {
   String get label => switch (this) {
         PostCategory.news => 'News',
-        PostCategory.article => 'Guide',
+        PostCategory.article => 'Article',
       };
 
   Color get color => switch (this) {
